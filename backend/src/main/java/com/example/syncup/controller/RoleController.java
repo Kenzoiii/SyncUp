@@ -16,6 +16,6 @@ public class RoleController {
     public Role createRole(@RequestBody Role role) {
         return roleService.saveRole(role);
     }
-    
+
     //for trial and error
 }

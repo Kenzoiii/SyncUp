@@ -19,3 +19,4 @@ public class TeamController {
 
     // Example: GET method for listing all teams would go here
 }
+ 
