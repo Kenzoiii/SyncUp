@@ -1,5 +1,5 @@
 package com.example.syncup.entity;
-
+//test
 import jakarta.persistence.*;
 
 @Entity

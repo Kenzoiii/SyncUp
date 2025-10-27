@@ -1,5 +1,5 @@
 package com.example.syncup.controller;
-
+//test
 import com.example.syncup.entity.User;
 import com.example.syncup.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

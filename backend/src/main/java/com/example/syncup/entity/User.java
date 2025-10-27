@@ -1,6 +1,6 @@
 package com.example.syncup.entity;
 import jakarta.persistence.*;
-
+//test
 @Entity
 @Table(name = "user")
 public class User {
