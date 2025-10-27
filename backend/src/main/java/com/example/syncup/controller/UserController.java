@@ -38,7 +38,7 @@ public class UserController {
             @RequestParam int roleId) {
         User newUser = userService.createUser(user, teamId, roleId);
         if (newUser == null) {
-            return ResponseEntity.badRequest().build(); // e.g., team/role not found
+            return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.ok(newUser);
     }
