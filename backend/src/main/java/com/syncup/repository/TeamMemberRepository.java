@@ -1,0 +1,11 @@
+package com.syncup.repository;
+
+import com.syncup.entity.TeamMember;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
+}
+
+
