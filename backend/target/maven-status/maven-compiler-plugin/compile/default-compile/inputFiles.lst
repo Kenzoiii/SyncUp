@@ -1,30 +1,44 @@
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\Project.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\service\CustomUserDetailsService.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\repository\UserRepository.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\Team.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\repository\ProjectRepository.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\service\JwtService.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\Notification.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\UserScore.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\repository\TeamMemberRepository.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\User.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\controller\AuthController.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\config\SecurityConfig.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\dto\LoginRequest.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\repository\TaskRepository.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\controller\DashboardController.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\repository\UserScoreRepository.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\controller\TaskController.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\controller\ProjectController.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\CalendarEvent.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\Task.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\SyncupBackendApplication.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\dto\UpdateProfileRequest.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\TimeLog.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\entity\TeamMember.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\dto\AuthResponse.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\dto\RegisterRequest.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\controller\UserController.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\service\AuthService.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\config\JwtAuthenticationFilter.java
-D:\School Files\Coding\SyncUp\backend\src\main\java\com\syncup\repository\TeamRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\TimeLog.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\ProjectDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\JpaConfig.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\TeamMemberDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\CustomUserDetailsService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\UserScoreRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\JwtService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TeamRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\TaskDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\CalendarEventRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\CalendarEvent.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\DashboardController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\RegisterRequest.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\SecurityConfig.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TimeLogRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\AuthService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\UserService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\TaskController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UserSummaryDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\UserScore.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\UserRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Team.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\LoginRequest.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\TaskService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UpdateProfileRequest.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UserDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\SyncupBackendApplication.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\JwtAuthenticationFilter.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\DashboardStatsDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\DashboardService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\AuthController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\AuthResponse.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TaskRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\ProjectService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\UserController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\ProjectController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\User.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TeamMemberRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Notification.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\NotificationRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\ProjectRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Project.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\TeamMember.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Task.java
