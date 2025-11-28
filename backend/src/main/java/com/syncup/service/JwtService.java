@@ -1,8 +1,13 @@
 package com.syncup.service;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -11,82 +16,74 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import jakarta.annotation.PostConstruct;
+import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtService {
-    
+
     @Value("${jwt.secret}")
     private String secret;
-    
+
     @Value("${jwt.expiration}")
-    private Long expiration;
-    
+    private Long jwtExpiration;
+
     private SecretKey signingKey;
 
     @PostConstruct
     public void init() {
-        this.signingKey = buildSigningKey();
-    }
-
-    private SecretKey buildSigningKey() {
+        // Optimized key generation
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(secret);
-        } catch (Exception ex) {
+        } catch (IllegalArgumentException e) {
             keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         }
 
-        // Ensure at least 256-bit key material; if shorter, derive with SHA-256
         if (keyBytes.length < 32) {
             try {
+                // Pad key if too short
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 keyBytes = digest.digest(keyBytes);
             } catch (NoSuchAlgorithmException e) {
                 throw new IllegalStateException("SHA-256 not available", e);
             }
         }
-
-        return Keys.hmacShaKeyFor(keyBytes);
+        this.signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private SecretKey getSigningKey() {
-        if (this.signingKey == null) {
-            this.signingKey = buildSigningKey();
-        }
-        return this.signingKey;
-    }
-    
-    public String generateToken(String email) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expiration);
-        
+    public String generateToken(String username) {
         return Jwts.builder()
-                .setSubject(email)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .setSubject(username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-    
+
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        
-        return claims.getSubject();
     }
-    
+
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token);
+            extractAllClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
             return false;
         }
     }

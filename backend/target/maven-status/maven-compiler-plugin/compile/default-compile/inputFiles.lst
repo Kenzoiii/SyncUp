@@ -1,29 +1,66 @@
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\TimeLog.java
+<<<<<<< HEAD
+=======
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\ProjectDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\JpaConfig.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\TeamMemberDTO.java
+>>>>>>> 67795efc1745ce6aadc288ba884e68647d9e4649
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\CustomUserDetailsService.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\UserScoreRepository.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\JwtService.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TeamRepository.java
+<<<<<<< HEAD
+=======
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\TaskDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\CalendarEventRepository.java
+>>>>>>> 67795efc1745ce6aadc288ba884e68647d9e4649
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\CalendarEvent.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\DashboardController.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\RegisterRequest.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\SecurityConfig.java
+<<<<<<< HEAD
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\AuthService.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\TaskController.java
+=======
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TimeLogRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\AuthService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\UserService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\TaskController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UserSummaryDTO.java
+>>>>>>> 67795efc1745ce6aadc288ba884e68647d9e4649
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\UserScore.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\UserRepository.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Team.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\LoginRequest.java
+<<<<<<< HEAD
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UpdateProfileRequest.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\SyncupBackendApplication.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\JwtAuthenticationFilter.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\AuthController.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\AuthResponse.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TaskRepository.java
+=======
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\TaskService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UpdateProfileRequest.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\UserDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\SyncupBackendApplication.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\config\JwtAuthenticationFilter.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\DashboardStatsDTO.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\DashboardService.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\AuthController.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\dto\AuthResponse.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TaskRepository.java
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\service\ProjectService.java
+>>>>>>> 67795efc1745ce6aadc288ba884e68647d9e4649
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\UserController.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\controller\ProjectController.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\User.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\TeamMemberRepository.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Notification.java
+<<<<<<< HEAD
+=======
+C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\NotificationRepository.java
+>>>>>>> 67795efc1745ce6aadc288ba884e68647d9e4649
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\repository\ProjectRepository.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\Project.java
 C:\MYFOLDER\Programming-FILES\SyncUp\backend\src\main\java\com\syncup\entity\TeamMember.java
