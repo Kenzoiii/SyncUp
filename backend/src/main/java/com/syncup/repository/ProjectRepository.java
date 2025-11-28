@@ -8,6 +8,9 @@ import java.util.List;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
+
+    // "Bulk" fetcher: SELECT * FROM projects WHERE team_id IN (1, 2, 5, ...)
+    List<Project> findByTeamIdIn(List<Long> teamIds);
+
     List<Project> findByTeamId(Long teamId);
-    List<Project> findByStatus(Project.Status status);
 }
