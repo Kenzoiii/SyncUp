@@ -6,7 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+<<<<<<< HEAD
         <module name="syncup-backend" />
+=======
+>>>>>>> 317c08e6115a2097e948b8a60e062db6f2abb0c6
       </profile>
     </annotationProcessing>
   </component>
