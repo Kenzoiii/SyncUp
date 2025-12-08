@@ -18,8 +18,8 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/my-tasks")
-    public ResponseEntity<List<TaskDTO>> getMyTasks(Authentication auth) {
-        return ResponseEntity.ok(taskService.getMyTasks(auth.getName()));
+    public ResponseEntity<List<TaskDTO>> getMyTasks(@RequestParam(required = false) Long teamId, Authentication auth) {
+        return ResponseEntity.ok(taskService.getMyTasks(auth.getName(), teamId));
     }
 
     @GetMapping("/project/{projectId}")

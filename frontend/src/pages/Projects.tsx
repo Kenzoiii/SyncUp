@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Users, Search, X } from 'lucide-react';
-import { projectsAPI, Project, ProjectMember, UserSearchResult } from '../services/api';
+import { projectsAPI, tasksAPI, teamsAPI, Project, ProjectMember, UserSearchResult, Task, Team } from '../services/api';
 import '../styles/Dashboard.css';
 import '../styles/Projects.css';
 
@@ -14,15 +14,39 @@ const Projects: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addMemberError, setAddMemberError] = useState<string | null>(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [projectForm, setProjectForm] = useState({ projectName: '', description: '' });
+  const [projectTasks, setProjectTasks] = useState<Task[]>([]);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskForm, setTaskForm] = useState({ taskName: '', description: '', priority: 'MEDIUM', dueDate: '', startDate: '' });
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeamRole, setSelectedTeamRole] = useState<string | null>(null);
 
   useEffect(() => {
+    fetchTeams();
     fetchProjects();
   }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const data = await teamsAPI.getMyTeams();
+      setTeams(data);
+      const storedTeam = localStorage.getItem('selectedTeamId');
+      if (storedTeam) {
+        const team = data.find(t => t.id === Number(storedTeam));
+        setSelectedTeamRole(team?.role ?? null);
+      }
+    } catch (err) {
+      console.error('Error fetching teams:', err);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const data = await projectsAPI.getMyProjects();
+      const storedTeam = localStorage.getItem('selectedTeamId');
+      const teamId = storedTeam ? Number(storedTeam) : undefined;
+      const data = await projectsAPI.getMyProjects(teamId);
       setProjects(data);
       setError(null);
     } catch (err: any) {
@@ -38,6 +62,8 @@ const Projects: React.FC = () => {
     try {
       const members = await projectsAPI.getProjectMembers(project.id);
       setProjectMembers(members);
+      const tasks = await tasksAPI.getProjectTasks(project.id);
+      setProjectTasks(tasks);
     } catch (err) {
       console.error('Error fetching project members:', err);
     }
@@ -56,6 +82,48 @@ const Projects: React.FC = () => {
       setAddMemberError(null);
     } catch (err) {
       console.error('Error searching users:', err);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    const storedTeam = localStorage.getItem('selectedTeamId');
+    if (!storedTeam) {
+      setError('Select a team first.');
+      return;
+    }
+    try {
+      await projectsAPI.createProject({
+        projectName: projectForm.projectName,
+        description: projectForm.description,
+        teamId: Number(storedTeam),
+      });
+      setShowProjectModal(false);
+      setProjectForm({ projectName: '', description: '' });
+      fetchProjects();
+    } catch (err: any) {
+      setError(err.response?.data || 'Failed to create project');
+      console.error('Error creating project:', err);
+    }
+  };
+
+  const handleAddTask = async () => {
+    if (!selectedProject) return;
+    try {
+      await tasksAPI.createTask({
+        projectId: selectedProject.id,
+        taskName: taskForm.taskName,
+        description: taskForm.description,
+        priority: taskForm.priority,
+        dueDate: taskForm.dueDate || undefined,
+        startDate: taskForm.startDate || undefined,
+      });
+      setShowTaskModal(false);
+      setTaskForm({ taskName: '', description: '', priority: 'MEDIUM', dueDate: '', startDate: '' });
+      const tasks = await tasksAPI.getProjectTasks(selectedProject.id);
+      setProjectTasks(tasks);
+    } catch (err: any) {
+      setAddMemberError(err.response?.data || 'Failed to add task');
+      console.error('Error adding task:', err);
     }
   };
 
@@ -116,6 +184,11 @@ const Projects: React.FC = () => {
             <h1>Projects</h1>
             <div className="user-score">Overview of your projects</div>
           </div>
+          {selectedTeamRole === 'ADMIN' && (
+            <button className="add-member-btn" onClick={() => setShowProjectModal(true)}>
+              <Plus size={16} /> Add Project
+            </button>
+          )}
         </div>
 
         {loading && <div className="loading-message">Loading projects...</div>}
@@ -201,6 +274,33 @@ const Projects: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              <div className="widget">
+                <div className="widget-header" style={{ justifyContent: 'space-between' }}>
+                  <h3>Tasks</h3>
+                  {(selectedProject.isAdmin || selectedTeamRole === 'ADMIN') && (
+                    <button className="add-member-btn" onClick={() => setShowTaskModal(true)}>
+                      <Plus size={16} /> Add Task
+                    </button>
+                  )}
+                </div>
+                <div className="members-list">
+                  {projectTasks.length === 0 && (
+                    <div className="no-results">No tasks yet</div>
+                  )}
+                  {projectTasks.map(task => (
+                    <div key={task.id} className="member-card" style={{ display: 'grid', gridTemplateColumns: '1fr auto' }}>
+                      <div>
+                        <div className="member-name">{task.taskName}</div>
+                        <div className="member-email">{task.description || 'No description'}</div>
+                      </div>
+                      <span className="member-role">
+                        {task.priority}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -262,6 +362,83 @@ const Projects: React.FC = () => {
                     ))
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showProjectModal && (
+          <div className="modal-overlay" onClick={() => setShowProjectModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Create Project</h3>
+                <button className="modal-close" onClick={() => setShowProjectModal(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Project name"
+                  value={projectForm.projectName}
+                  onChange={(e) => setProjectForm({ ...projectForm, projectName: e.target.value })}
+                  autoFocus
+                />
+                <textarea
+                  placeholder="Description"
+                  value={projectForm.description}
+                  onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                />
+                <button className="add-member-btn" onClick={handleCreateProject}>Create</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showTaskModal && selectedProject && (
+          <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Add Task to {selectedProject.projectName}</h3>
+                <button className="modal-close" onClick={() => setShowTaskModal(false)}>
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input
+                  type="text"
+                  placeholder="Task name"
+                  value={taskForm.taskName}
+                  onChange={(e) => setTaskForm({ ...taskForm, taskName: e.target.value })}
+                  autoFocus
+                />
+                <textarea
+                  placeholder="Description"
+                  value={taskForm.description}
+                  onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                />
+                <select
+                  value={taskForm.priority}
+                  onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}
+                >
+                  <option value="LOW">LOW</option>
+                  <option value="MEDIUM">MEDIUM</option>
+                  <option value="HIGH">HIGH</option>
+                  <option value="URGENT">URGENT</option>
+                </select>
+                <input
+                  type="date"
+                  value={taskForm.startDate}
+                  onChange={(e) => setTaskForm({ ...taskForm, startDate: e.target.value })}
+                  placeholder="Start date"
+                />
+                <input
+                  type="date"
+                  value={taskForm.dueDate}
+                  onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                  placeholder="Due date"
+                />
+                <button className="add-member-btn" onClick={handleAddTask}>Add Task</button>
               </div>
             </div>
           </div>

@@ -16,8 +16,7 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping("/stats")
-    public ResponseEntity<DashboardStatsDTO> getDashboardStats(Authentication authentication) {
-        // authentication.getName() contains the email from the JWT
-        return ResponseEntity.ok(dashboardService.getUserStats(authentication.getName()));
+    public ResponseEntity<DashboardStatsDTO> getDashboardStats(@RequestParam(required = false) Long teamId, Authentication authentication) {
+        return ResponseEntity.ok(dashboardService.getUserStats(authentication.getName(), teamId));
     }
 }

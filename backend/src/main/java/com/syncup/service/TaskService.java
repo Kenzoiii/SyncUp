@@ -2,10 +2,13 @@ package com.syncup.service;
 
 import com.syncup.dto.TaskDTO;
 import com.syncup.entity.Project;
+import com.syncup.entity.TeamMember;
 import com.syncup.entity.Task;
 import com.syncup.entity.User;
 import com.syncup.repository.ProjectRepository;
 import com.syncup.repository.TaskRepository;
+import com.syncup.repository.TeamMemberRepository;
+import com.syncup.repository.TeamRepository;
 import com.syncup.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,12 +24,26 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final TeamRepository teamRepository;
 
-    public List<TaskDTO> getMyTasks(String email) {
+    public List<TaskDTO> getMyTasks(String email, Long teamId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return taskRepository.findByAssignedUserId(user.getId()).stream()
+        List<Task> tasks;
+        if (teamId != null) {
+            boolean isMember = user.getTeamMemberships().stream()
+                    .anyMatch(tm -> tm.getTeamId().equals(teamId));
+            if (!isMember) {
+                return List.of();
+            }
+            tasks = taskRepository.findByAssignedUserIdAndTeam(user.getId(), teamId);
+        } else {
+            tasks = taskRepository.findByAssignedUserId(user.getId());
+        }
+
+        return tasks.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -43,9 +60,24 @@ public class TaskService {
         Project project = projectRepository.findById(dto.getProjectId())
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
+        User creator = userRepository.findByEmail(creatorEmail)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isAdmin = teamMemberRepository.findByTeamIdAndUserId(project.getTeamId(), creator.getId())
+            .map(tm -> tm.getRole() == TeamMember.Role.ADMIN)
+            .orElse(false);
+
+        boolean isTeamOwner = teamRepository.findById(project.getTeamId())
+            .map(team -> team.getAdminUserId().equals(creator.getId()))
+            .orElse(false);
+
+        if (!isAdmin && !isTeamOwner) {
+            throw new RuntimeException("Only team admins or the team owner can add tasks to this project");
+        }
+
         Task task = Task.builder()
                 .taskName(dto.getTaskName())
-                .description(dto.getDescription())
+            .description(dto.getDescription())
                 .projectId(project.getId())
                 .status(Task.Status.TODO)
                 .priority(Task.Priority.valueOf(dto.getPriority())) // Ensure DTO sends valid Enum string

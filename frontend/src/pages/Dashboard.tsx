@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Clock, CheckSquare, TrendingUp, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { dashboardAPI, DashboardStats, tasksAPI, Task } from '../services/api';
+import { dashboardAPI, DashboardStats, tasksAPI, Task, teamsAPI, Team } from '../services/api';
 import Calendar from '../components/Calendar';
 import '../styles/Dashboard.css';
 
@@ -11,23 +11,91 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Project Overview');
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(() => {
+    const stored = localStorage.getItem('selectedTeamId');
+    return stored ? Number(stored) : null;
+  });
+  const [selectedTeamName, setSelectedTeamName] = useState<string | null>(() => localStorage.getItem('selectedTeamName'));
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async (teamId?: number) => {
       try {
-        const stats = await dashboardAPI.getStats();
+        const stats = await dashboardAPI.getStats(teamId);
         setDashboardStats(stats);
-        
-        // Fetch recent tasks
-        const tasks = await tasksAPI.getMyTasks();
-        setRecentTasks(tasks.slice(0, 5)); // Show only 5 most recent tasks
+
+        const tasks = await tasksAPI.getMyTasks(teamId);
+        setRecentTasks(tasks.slice(0, 5));
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       }
     };
 
-    fetchDashboardData();
+    const initTeams = async () => {
+      try {
+        const myTeams = await teamsAPI.getMyTeams();
+        setTeams(myTeams);
+        if (myTeams.length > 0) {
+          const initialId = selectedTeamId && myTeams.some(t => t.id === selectedTeamId)
+            ? selectedTeamId
+            : myTeams[0].id;
+          const initialName = myTeams.find(t => t.id === initialId)?.teamName || null;
+          setSelectedTeamId(initialId);
+          if (initialName) setSelectedTeamName(initialName);
+          localStorage.setItem('selectedTeamId', String(initialId));
+          if (initialName) localStorage.setItem('selectedTeamName', initialName);
+          await fetchData(initialId);
+          return;
+        }
+        // fallback no teams
+        await fetchData();
+      } catch (err) {
+        console.error('Failed to load teams:', err);
+        await fetchData(selectedTeamId || undefined);
+      }
+    };
+
+    initTeams();
   }, []);
+
+  useEffect(() => {
+    const refetch = async () => {
+      await dashboardAPI.getStats(selectedTeamId || undefined).then(setDashboardStats).catch(console.error);
+      await tasksAPI.getMyTasks(selectedTeamId || undefined).then(data => setRecentTasks(data.slice(0, 5))).catch(console.error);
+    };
+    if (selectedTeamId !== null) {
+      refetch();
+    }
+  }, [selectedTeamId]);
+
+  const handleTeamChange = (team: Team) => {
+    setSelectedTeamId(team.id);
+    setSelectedTeamName(team.teamName);
+    localStorage.setItem('selectedTeamId', String(team.id));
+    localStorage.setItem('selectedTeamName', team.teamName);
+  };
+
+  const handleJoinTeam = async () => {
+    if (!joinCode.trim()) {
+      setJoinError('Please enter a team code or ID');
+      return;
+    }
+    try {
+      setJoinError(null);
+      const team = await teamsAPI.joinTeam(joinCode.trim());
+      const myTeams = await teamsAPI.getMyTeams();
+      setTeams(myTeams);
+      handleTeamChange(team);
+      setShowJoinModal(false);
+      setJoinCode('');
+    } catch (err: any) {
+      const message = err.response?.data || err.message || 'Failed to join team';
+      setJoinError(message);
+    }
+  };
 
   // Sample data for charts
   const projectProgressData = [
@@ -108,6 +176,32 @@ const Dashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+              <div className="team-switcher" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div className="team-dropdown">
+                  <button className="tab" onClick={() => setShowJoinModal(false)} style={{ cursor: 'default' }}>
+                    Teams
+                  </button>
+                  <div className="team-select" style={{ position: 'relative' }}>
+                    <select
+                      value={selectedTeamId ?? ''}
+                      onChange={(e) => {
+                        const id = Number(e.target.value);
+                        const team = teams.find(t => t.id === id);
+                        if (team) handleTeamChange(team);
+                      }}
+                      style={{ padding: '8px', borderRadius: '8px' }}
+                    >
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>{team.teamName}</option>
+                      ))}
+                      {teams.length === 0 && <option value="">No teams</option>}
+                    </select>
+                  </div>
+                </div>
+                <button className="tab" onClick={() => { setShowJoinModal(true); setJoinError(null); }}>
+                  Add Team
+                </button>
+              </div>
           </div>
 
           {/* Tasks Status Widget */}
@@ -359,14 +453,37 @@ const Dashboard: React.FC = () => {
         {/* Header */}
         <div className="dashboard-header">
           <div className="welcome-section">
-            <h1>Hi User! Welcome! Manage your all tasks & daily work here.</h1>
+            <h1>Hi User! {selectedTeamName ? `Team: ${selectedTeamName}` : 'Select a team'} to manage your work.</h1>
             <div className="user-score">
               Your Score <span className="score-badge">{dashboardStats?.score || 'A+'}</span>
             </div>
           </div>
-          <div className="user-avatar">
-            <div className="avatar-emoji">✌️</div>
-            <div className="confetti">🎉</div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div className="team-switcher" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className="team-select" style={{ position: 'relative' }}>
+                <select
+                  value={selectedTeamId ?? ''}
+                  onChange={(e) => {
+                    const id = Number(e.target.value);
+                    const team = teams.find(t => t.id === id);
+                    if (team) handleTeamChange(team);
+                  }}
+                  style={{ padding: '8px', borderRadius: '8px', minWidth: '160px' }}
+                >
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.teamName}</option>
+                  ))}
+                  {teams.length === 0 && <option value="">No teams</option>}
+                </select>
+              </div>
+              <button className="tab" onClick={() => { setShowJoinModal(true); setJoinError(null); }}>
+                Add Team
+              </button>
+            </div>
+            <div className="user-avatar">
+              <div className="avatar-emoji">✌️</div>
+              <div className="confetti">🎉</div>
+            </div>
           </div>
         </div>
 
@@ -408,6 +525,29 @@ const Dashboard: React.FC = () => {
         {activeTab === 'Task Management' && renderTaskManagement()}
         {activeTab === 'Notifications & Alerts' && renderNotifications()}
         {activeTab === 'Project Tools' && renderProjectTools()}
+
+        {showJoinModal && (
+          <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Join a Team</h3>
+                <button className="modal-close" onClick={() => setShowJoinModal(false)}>×</button>
+              </div>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label>Enter team code or ID</label>
+                <input
+                  type="text"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  placeholder="e.g. 5 or MY-TEAM"
+                  autoFocus
+                />
+                {joinError && <div className="error-message">{joinError}</div>}
+                <button className="tab" onClick={handleJoinTeam}>Join</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

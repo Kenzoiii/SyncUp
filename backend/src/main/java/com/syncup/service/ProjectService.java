@@ -27,7 +27,7 @@ public class ProjectService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
 
-    public List<ProjectDTO> getProjectsForUser(String email) {
+        public List<ProjectDTO> getProjectsForUser(String email, Long teamFilter) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -38,8 +38,14 @@ public class ProjectService {
 
         if (teamIds.isEmpty()) return List.of();
 
+                if (teamFilter != null && !teamIds.contains(teamFilter)) {
+                        return List.of();
+                }
+
         // 2. Fetch Projects in bulk (Optimized)
-        List<Project> projects = projectRepository.findByTeamIdIn(teamIds);
+                List<Project> projects = (teamFilter != null)
+                                ? projectRepository.findByTeamId(teamFilter)
+                                : projectRepository.findByTeamIdIn(teamIds);
 
         // 3. Map to DTO
         return projects.stream().map(project -> {
@@ -58,6 +64,49 @@ public class ProjectService {
                     .build();
         }).collect(Collectors.toList());
     }
+
+        @Transactional
+        public ProjectDTO createProject(ProjectDTO dto, String email) {
+                if (dto.getTeamId() == null) {
+                        throw new RuntimeException("teamId is required to create a project");
+                }
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                boolean isAdmin = teamMemberRepository.findByTeamIdAndUserId(dto.getTeamId(), user.getId())
+                                .map(tm -> tm.getRole() == TeamMember.Role.ADMIN)
+                                .orElse(false);
+
+                Team team = teamRepository.findById(dto.getTeamId())
+                                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+                if (!isAdmin && !user.getId().equals(team.getAdminUserId())) {
+                        throw new RuntimeException("Only team admins can create projects");
+                }
+
+                Project project = Project.builder()
+                                .projectName(dto.getProjectName())
+                                .description(dto.getDescription())
+                                .teamId(dto.getTeamId())
+                                .status(Project.Status.ACTIVE)
+                                .progressPercentage(dto.getProgressPercentage() != null ? dto.getProgressPercentage() : 0)
+                                .startDate(dto.getStartDate())
+                                .build();
+
+                Project saved = projectRepository.save(project);
+
+                return ProjectDTO.builder()
+                                .id(saved.getId())
+                                .projectName(saved.getProjectName())
+                                .description(saved.getDescription())
+                                .status(saved.getStatus().name())
+                                .progressPercentage(saved.getProgressPercentage())
+                                .teamId(saved.getTeamId())
+                                .startDate(saved.getStartDate())
+                                .isAdmin(true)
+                                .build();
+        }
 
     public List<TeamMemberDTO> getProjectMembers(Long projectId) {
         Project project = projectRepository.findById(projectId)

@@ -16,7 +16,9 @@ const TaskList: React.FC = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const data = await tasksAPI.getMyTasks();
+      const storedTeam = localStorage.getItem('selectedTeamId');
+      const teamId = storedTeam ? Number(storedTeam) : undefined;
+      const data = await tasksAPI.getMyTasks(teamId);
       setTasks(data);
       setError(null);
     } catch (err: any) {

@@ -62,6 +62,14 @@ export interface AuthResponse {
   teamName: string;
 }
 
+export interface Team {
+  id: number;
+  teamName: string;
+  description?: string;
+  adminUserId?: number;
+  role: string;
+}
+
 export interface DashboardStats {
   score: string;
   tasksCompleted: number;
@@ -140,8 +148,8 @@ export const authAPI = {
 
 // Dashboard API
 export const dashboardAPI = {
-  getStats: async (): Promise<DashboardStats> => {
-    const response = await api.get('/dashboard/stats');
+  getStats: async (teamId?: number): Promise<DashboardStats> => {
+    const response = await api.get('/dashboard/stats', { params: { teamId } });
     return response.data;
   },
 
@@ -170,8 +178,12 @@ export const usersAPI = {
 
 // Projects API
 export const projectsAPI = {
-  getMyProjects: async (): Promise<Project[]> => {
-    const response = await api.get('/projects/my-projects');
+  getMyProjects: async (teamId?: number): Promise<Project[]> => {
+    const response = await api.get('/projects/my-projects', { params: { teamId } });
+    return response.data;
+  },
+  createProject: async (payload: Partial<Project>): Promise<Project> => {
+    const response = await api.post('/projects', payload);
     return response.data;
   },
   getProjectMembers: async (projectId: number): Promise<ProjectMember[]> => {
@@ -190,12 +202,28 @@ export const projectsAPI = {
 
 // Tasks API
 export const tasksAPI = {
-  getMyTasks: async (): Promise<Task[]> => {
-    const response = await api.get('/tasks/my-tasks');
+  getMyTasks: async (teamId?: number): Promise<Task[]> => {
+    const response = await api.get('/tasks/my-tasks', { params: { teamId } });
     return response.data;
   },
   getProjectTasks: async (projectId: number): Promise<Task[]> => {
     const response = await api.get(`/tasks/project/${projectId}`);
+    return response.data;
+  },
+  createTask: async (payload: Partial<Task>): Promise<Task> => {
+    const response = await api.post('/tasks', payload);
+    return response.data;
+  },
+};
+
+// Teams API
+export const teamsAPI = {
+  getMyTeams: async (): Promise<Team[]> => {
+    const response = await api.get('/teams/my-teams');
+    return response.data;
+  },
+  joinTeam: async (code: string): Promise<Team> => {
+    const response = await api.post('/teams/join', { code });
     return response.data;
   },
 };

@@ -18,7 +18,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Standard efficient lookups
     List<Task> findByAssignedUserId(Long assignedUserId);
 
+    @Query("SELECT t FROM Task t LEFT JOIN FETCH t.assignedUser au JOIN t.project p WHERE t.assignedUserId = :userId AND p.teamId = :teamId")
+    List<Task> findByAssignedUserIdAndTeam(@Param("userId") Long userId, @Param("teamId") Long teamId);
+
     // DASHBOARD COUNTS (Very fast, returns a simple number)
     long countByStatus(Task.Status status);
     long countByAssignedUserIdAndStatus(Long userId, Task.Status status);
+
+    long countByProjectIdIn(List<Long> projectIds);
+    long countByProjectIdInAndStatus(List<Long> projectIds, Task.Status status);
 }

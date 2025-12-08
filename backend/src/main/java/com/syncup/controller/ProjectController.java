@@ -21,8 +21,13 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @GetMapping("/my-projects")
-    public ResponseEntity<List<ProjectDTO>> getMyProjects(Authentication auth) {
-        return ResponseEntity.ok(projectService.getProjectsForUser(auth.getName()));
+    public ResponseEntity<List<ProjectDTO>> getMyProjects(@RequestParam(required = false) Long teamId, Authentication auth) {
+        return ResponseEntity.ok(projectService.getProjectsForUser(auth.getName(), teamId));
+    }
+
+    @PostMapping
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectDTO dto, Authentication auth) {
+        return ResponseEntity.ok(projectService.createProject(dto, auth.getName()));
     }
 
     @GetMapping("/{projectId}/members")
