@@ -78,6 +78,42 @@ public class ProjectService {
     }
 
     @Transactional
+    public ProjectDTO createProject(ProjectDTO projectDTO, String ownerEmail) {
+        User user = userRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1. Verify user belongs to the team they are creating a project for
+        boolean isMember = teamMemberRepository.findByTeamIdAndUserId(projectDTO.getTeamId(), user.getId()).isPresent();
+        if (!isMember) {
+            throw new RuntimeException("You are not a member of this team.");
+        }
+
+        // 2. Create the Project Entity
+        Project project = Project.builder()
+                .projectName(projectDTO.getProjectName())
+                .description(projectDTO.getDescription())
+                .teamId(projectDTO.getTeamId())
+                .status(Project.Status.ACTIVE)
+                .progressPercentage(0)
+                .startDate(projectDTO.getStartDate() != null ? projectDTO.getStartDate() : java.time.LocalDate.now())
+                .build();
+
+        Project savedProject = projectRepository.save(project);
+
+        // 3. Return DTO
+        return ProjectDTO.builder()
+                .id(savedProject.getId())
+                .projectName(savedProject.getProjectName())
+                .description(savedProject.getDescription())
+                .status(savedProject.getStatus().name())
+                .progressPercentage(savedProject.getProgressPercentage())
+                .teamId(savedProject.getTeamId())
+                .startDate(savedProject.getStartDate())
+                .isAdmin(true) // The creator is effectively an admin
+                .build();
+    }
+
+    @Transactional
     public void addMember(Long projectId, String emailToAdd, String requesterEmail) {
         // 1. Validation
         Project project = projectRepository.findById(projectId)
