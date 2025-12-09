@@ -1,22 +1,42 @@
-import React, { useState } from 'react';
-import { X, Folder, Calendar } from 'lucide-react';
-import { projectsAPI } from '../services/api';
-import '../styles/CreateTaskModal.css'; // Re-use the modal styles we made earlier!
+import React, { useState, useEffect } from 'react';
+import { X, Folder, Calendar, Users } from 'lucide-react';
+import { projectsAPI, teamsAPI, Team } from '../services/api';
+import '../styles/CreateTaskModal.css';
 
 interface CreateProjectModalProps {
     onClose: () => void;
     onProjectCreated: () => void;
-    teamId: number; // We need to know which team to create it for
+    defaultTeamId?: number; // Optional now, since we have a selector
 }
 
-const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onProjectCreated, teamId }) => {
+const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onProjectCreated, defaultTeamId }) => {
     const [formData, setFormData] = useState({
         projectName: '',
         description: '',
-        startDate: new Date().toISOString().split('T')[0]
+        startDate: new Date().toISOString().split('T')[0],
+        teamId: defaultTeamId || ''
     });
+
+    const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Fetch teams so user can select one
+    useEffect(() => {
+        const loadTeams = async () => {
+            try {
+                const myTeams = await teamsAPI.getMyTeams();
+                setTeams(myTeams);
+                // If no team selected yet, default to the first one or the passed default
+                if (!formData.teamId && myTeams.length > 0) {
+                    setFormData(prev => ({ ...prev, teamId: myTeams[0].id }));
+                }
+            } catch (err) {
+                console.error("Failed to load teams");
+            }
+        };
+        loadTeams();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,7 +44,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onProj
         try {
             await projectsAPI.createProject({
                 ...formData,
-                teamId: teamId
+                teamId: Number(formData.teamId)
             });
             onProjectCreated();
             onClose();
@@ -45,6 +65,21 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ onClose, onProj
 
                 <form onSubmit={handleSubmit} className="modal-form">
                     {error && <div className="error-message">{error}</div>}
+
+                    {/* Team Selector - NEW FEATURE */}
+                    <div className="form-group">
+                        <label className="label-text"><Users size={16} /> Assign to Team</label>
+                        <select
+                            className="input"
+                            value={formData.teamId}
+                            onChange={e => setFormData({...formData, teamId: Number(e.target.value)})}
+                            required
+                        >
+                            {teams.map(t => (
+                                <option key={t.id} value={t.id}>{t.teamName}</option>
+                            ))}
+                        </select>
+                    </div>
 
                     <div className="form-group">
                         <label className="label-text"><Folder size={16} /> Project Name</label>

@@ -28,15 +28,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-      // FIX: Check if the error came from the login page.
-      // If it's a login attempt, we should NOT redirect/refresh.
       const isLoginRequest = error.config && error.config.url.includes('/auth/login');
 
-      if (
-          (error.response?.status === 401 || error.response?.status === 403) &&
-          !isLoginRequest // <--- ADD THIS CONDITION
-      ) {
-        // Token is invalid or expired (for normal requests)
+      // ONLY logout on 401 (Token Expired). IGNORE 403.
+      if (error.response?.status === 401 && !isLoginRequest) {
         console.error('Authentication failed. Redirecting to login...');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -49,6 +44,10 @@ api.interceptors.response.use(
 export interface LoginRequest {
   email: string;
   password: string;
+}
+export interface TeamRequest {
+  teamName: string;
+  description?: string;
 }
 
 export interface RegisterRequest {
@@ -79,7 +78,12 @@ export interface AuthResponse {
   teamName: string;
 }
 
-
+export interface Team {
+  id: number;
+  teamName: string;
+  description: string;
+  adminUserId: number; //
+}
 
 export interface DashboardStats {
   score: string;
@@ -110,7 +114,8 @@ export interface Project {
   status: string;
   progressPercentage: number;
   teamId: number;
-  isAdmin: boolean;
+  isAdmin?: boolean;
+  admin?: boolean;
 }
 
 export interface ProjectMember {
@@ -130,6 +135,13 @@ export interface Task {
   startDate: string;
   projectId: number;
   assignedUserName?: string;
+}
+export interface TeamMember {
+  userId: number;
+  fullName: string;
+  email: string;
+  role: string;
+  joinedAt?: string;
 }
 
 export interface CreateProjectRequest {
@@ -158,9 +170,40 @@ export const authAPI = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.warn("Server logout failed, but clearing local session anyway.");
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+  },
+};
+
+export const teamsAPI = {
+  createTeam: async (data: TeamRequest) => {
+    const response = await api.post('/teams/create', data);
+    return response.data;
+  },
+  joinTeam: async (teamName: string) => {
+    const response = await api.post('/teams/join', { teamName });
+    return response.data;
+  },
+  // NEW FUNCTION
+  getMyTeams: async (): Promise<Team[]> => {
+    const response = await api.get('/teams/my-teams');
+    return response.data;
+  },
+
+  getTeamMembers: async (teamId: number): Promise<TeamMember[]> => {
+    const response = await api.get(`/teams/${teamId}/members`);
+    return response.data;
+  },
+
+  deleteTeam: async (teamId: number): Promise<void> => {
+    await api.delete(`/teams/${teamId}`);
   },
 };
 
@@ -196,8 +239,9 @@ export const usersAPI = {
 
 // Projects API
 export const projectsAPI = {
-  getMyProjects: async (): Promise<Project[]> => {
-    const response = await api.get('/projects/my-projects');
+  getMyProjects: async (teamId?: number): Promise<Project[]> => {
+    const url = teamId ? `/projects/my-projects?teamId=${teamId}` : '/projects/my-projects';
+    const response = await api.get(url);
     return response.data;
   },
   getProjectMembers: async (projectId: number): Promise<ProjectMember[]> => {
@@ -216,12 +260,16 @@ export const projectsAPI = {
     const response = await api.post('/projects', projectData);
     return response.data;
   },
+  deleteProject: async (projectId: number): Promise<void> => {
+    await api.delete(`/projects/${projectId}`);
+  },
 };
 
 // Tasks API
 export const tasksAPI = {
-  getMyTasks: async (): Promise<Task[]> => {
-    const response = await api.get('/tasks/my-tasks');
+  getMyTasks: async (teamId?: number): Promise<Task[]> => {
+    const url = teamId ? `/tasks/my-tasks?teamId=${teamId}` : '/tasks/my-tasks';
+    const response = await api.get(url);
     return response.data;
   },
   getProjectTasks: async (projectId: number): Promise<Task[]> => {
@@ -232,7 +280,9 @@ export const tasksAPI = {
     const response = await api.post('/tasks', taskData);
     return response.data;
   },
-
+  deleteTask: async (taskId: number): Promise<void> => {
+    await api.delete(`/tasks/${taskId}`);
+  },
 };
 
 export default api;

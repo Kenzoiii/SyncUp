@@ -27,21 +27,34 @@ public class ProjectService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
 
-    public List<ProjectDTO> getProjectsForUser(String email) {
+    public List<ProjectDTO> getProjectsForUser(String email, Long activeTeamId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 1. Get all Team IDs the user belongs to
-        List<Long> teamIds = user.getTeamMemberships().stream()
-                .map(TeamMember::getTeamId)
-                .toList();
+        List<Project> projects;
 
-        if (teamIds.isEmpty()) return List.of();
+        // FILTER LOGIC
+        if (activeTeamId != null) {
+            // Verify user belongs to this team (Security Check)
+            boolean isMember = user.getTeamMemberships().stream()
+                    .anyMatch(tm -> tm.getTeamId().equals(activeTeamId));
 
-        // 2. Fetch Projects in bulk (Optimized)
-        List<Project> projects = projectRepository.findByTeamIdIn(teamIds);
+            if (!isMember) {
+                // If they try to access a team they aren't in, return empty or throw error
+                return List.of();
+            }
+            // Fetch ONLY projects for this team
+            projects = projectRepository.findByTeamId(activeTeamId);
+        } else {
+            // Fallback: Fetch everything (old behavior)
+            List<Long> teamIds = user.getTeamMemberships().stream()
+                    .map(TeamMember::getTeamId)
+                    .toList();
+            if (teamIds.isEmpty()) return List.of();
+            projects = projectRepository.findByTeamIdIn(teamIds);
+        }
 
-        // 3. Map to DTO
+        // Map to DTO (Same as before)
         return projects.stream().map(project -> {
             boolean isAdmin = user.getTeamMemberships().stream()
                     .anyMatch(tm -> tm.getTeamId().equals(project.getTeamId()) && tm.getRole() == TeamMember.Role.ADMIN);
@@ -147,6 +160,26 @@ public class ProjectService {
                 .build();
 
         teamMemberRepository.save(newMember);
+    }
+
+    @Transactional
+    public void deleteProject(Long projectId, String userEmail) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Security Check: Is the user an Admin of the team this project belongs to?
+        boolean isAdmin = teamMemberRepository.findByTeamIdAndUserId(project.getTeamId(), user.getId())
+                .map(tm -> tm.getRole() == TeamMember.Role.ADMIN)
+                .orElse(false);
+
+        if (!isAdmin) {
+            throw new RuntimeException("Only Team Admins can delete projects.");
+        }
+
+        projectRepository.delete(project);
     }
 
     public List<UserSummaryDTO> searchUsers(String query) {

@@ -5,22 +5,29 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { dashboardAPI, DashboardStats, tasksAPI, Task } from '../services/api';
 import Calendar from '../components/Calendar';
 import '../styles/Dashboard.css';
+import TeamModal from '../components/TeamModal';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Project Overview');
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
+  const [showTeamModal, setShowTeamModal] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
+      // 1. Get Active Team ID
+      const userString = localStorage.getItem('user');
+      const user = userString ? JSON.parse(userString) : null;
+      const activeTeamId = user?.teamId;
+
       try {
-        const stats = await dashboardAPI.getStats();
+        const stats = await dashboardAPI.getStats(); // You might want to filter stats by team later too!
         setDashboardStats(stats);
-        
-        // Fetch recent tasks
-        const tasks = await tasksAPI.getMyTasks();
-        setRecentTasks(tasks.slice(0, 5)); // Show only 5 most recent tasks
+
+        // 2. Pass teamId to fetch tasks
+        const tasks = await tasksAPI.getMyTasks(activeTeamId);
+        setRecentTasks(tasks.slice(0, 5));
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       }
@@ -320,35 +327,49 @@ const Dashboard: React.FC = () => {
       { name: 'Time Tracker', description: 'Track time spent on tasks', icon: '⏱️' },
       { name: 'Report Generator', description: 'Generate project reports', icon: '📊' },
       { name: 'Team Chat', description: 'Collaborate with team members', icon: '💬' },
-      { name: 'File Manager', description: 'Manage project files', icon: '📁' }
+      { name: 'File Manager', description: 'Manage project files', icon: '📁' },
+      {
+        name: 'Team Management',
+        description: 'Create or Join a Team',
+        icon: '👥',
+        isAction: true,
+        action: () => setShowTeamModal(true)
+      }
     ];
 
     return (
-      <div className="dashboard-content">
-        <div className="left-column" style={{ gridColumn: '1 / -1' }}>
-          <div className="widget">
-            <div className="widget-header">
-              <h3>Project Tools</h3>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
-              {tools.map((tool, index) => (
-                <div key={index} style={{
-                  padding: '24px',
-                  backgroundColor: 'var(--primary-bg)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }} className="tool-card">
-                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>{tool.icon}</div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--white)', marginBottom: '4px' }}>{tool.name}</div>
-                  <div style={{ fontSize: '14px', color: 'var(--gray-medium)' }}>{tool.description}</div>
-                </div>
-              ))}
+        <div className="dashboard-content">
+          <div className="left-column" style={{ gridColumn: '1 / -1' }}>
+            <div className="widget">
+              <div className="widget-header">
+                <h3>Project Tools</h3>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
+                {tools.map((tool, index) => (
+                    <div
+                        key={index}
+                        // --- THIS WAS MISSING IN YOUR CODE ---
+                        onClick={tool.isAction ? tool.action : undefined}
+                        // ------------------------------------
+                        style={{
+                          padding: '24px',
+                          backgroundColor: 'var(--primary-bg)',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        className="tool-card"
+                    >
+                      <div style={{ fontSize: '32px', marginBottom: '12px' }}>{tool.icon}</div>
+                      <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--white)', marginBottom: '4px' }}>{tool.name}</div>
+                      <div style={{ fontSize: '14px', color: 'var(--gray-medium)' }}>{tool.description}</div>
+                    </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
     );
   };
 
@@ -408,6 +429,16 @@ const Dashboard: React.FC = () => {
         {activeTab === 'Task Management' && renderTaskManagement()}
         {activeTab === 'Notifications & Alerts' && renderNotifications()}
         {activeTab === 'Project Tools' && renderProjectTools()}
+
+        {showTeamModal && (
+            <TeamModal
+                onClose={() => setShowTeamModal(false)}
+                onSuccess={() => {
+                  // Refresh page or user data after team change
+                  window.location.reload();
+                }}
+            />
+        )}
       </div>
     </div>
   );
