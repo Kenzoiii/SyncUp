@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
   const metricsData = [
     { 
       label: 'Task Done', 
-      value: dashboardStats ? `${dashboardStats.taskCompletionRate}%` : '75%', 
+      value: dashboardStats ? `${dashboardStats.taskCompletionRate}%` : '0%',
       icon: <CheckSquare size={24} />, 
       color: '#ff6b9d' 
     },

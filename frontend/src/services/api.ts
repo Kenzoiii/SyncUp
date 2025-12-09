@@ -26,17 +26,24 @@ api.interceptors.request.use(
 
 // Add response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      // Token is invalid or expired
-      console.error('Authentication failed. Redirecting to login...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    (response) => response,
+    (error) => {
+      // FIX: Check if the error came from the login page.
+      // If it's a login attempt, we should NOT redirect/refresh.
+      const isLoginRequest = error.config && error.config.url.includes('/auth/login');
+
+      if (
+          (error.response?.status === 401 || error.response?.status === 403) &&
+          !isLoginRequest // <--- ADD THIS CONDITION
+      ) {
+        // Token is invalid or expired (for normal requests)
+        console.error('Authentication failed. Redirecting to login...');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
 );
 
 export interface LoginRequest {
