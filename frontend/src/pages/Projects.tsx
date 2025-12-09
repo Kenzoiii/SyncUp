@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Users, Search, X } from 'lucide-react';
 import { projectsAPI, Project, ProjectMember, UserSearchResult } from '../services/api';
+import CreateProjectModal from '../components/CreateProjectModal';
 import '../styles/Dashboard.css';
 import '../styles/Projects.css';
 
@@ -14,6 +15,10 @@ const Projects: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addMemberError, setAddMemberError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : null;
+  const teamId = user?.teamId;
 
   useEffect(() => {
     fetchProjects();
@@ -111,12 +116,19 @@ const Projects: React.FC = () => {
   return (
     <div className="dashboard">
       <div className="main-content">
-        <div className="dashboard-header">
-          <div className="welcome-section">
-            <h1>Projects</h1>
-            <div className="user-score">Overview of your projects</div>
+          <div className="dashboard-header">
+              <div className="welcome-section">
+                  <h1>Projects</h1>
+                  <div className="user-score">Overview of your projects</div>
+              </div>
+              <button
+                  className="btn btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  onClick={() => setShowCreateModal(true)}
+              >
+                  <Plus size={18} /> New Project
+              </button>
           </div>
-        </div>
 
         {loading && <div className="loading-message">Loading projects...</div>}
         {error && <div className="error-message">{error}</div>}
@@ -266,6 +278,89 @@ const Projects: React.FC = () => {
             </div>
           </div>
         )}
+          {showAddMemberModal && selectedProject && (
+              <div className="modal-overlay" onClick={() => setShowAddMemberModal(false)}>
+                  <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                      <div className="modal-header">
+                          <h3>Add Member to {selectedProject.projectName}</h3>
+                          <button
+                              className="modal-close"
+                              onClick={() => {
+                                  setShowAddMemberModal(false);
+                                  setSearchQuery('');
+                                  setSearchResults([]);
+                                  setAddMemberError(null);
+                              }}
+                          >
+                              <X size={20} />
+                          </button>
+                      </div>
+                      <div className="modal-body">
+                          <div className="search-input-wrapper">
+                              <Search size={18} />
+                              <input
+                                  type="text"
+                                  className="search-input"
+                                  placeholder="Search by name or email..."
+                                  value={searchQuery}
+                                  onChange={(e) => handleSearchUsers(e.target.value)}
+                                  autoFocus
+                              />
+                          </div>
+                          {addMemberError && (
+                              <div className="error-message">{addMemberError}</div>
+                          )}
+                          <div className="search-results">
+                              {searchQuery.trim().length < 2 ? (
+                                  <div className="search-hint">Type at least 2 characters to search</div>
+                              ) : searchResults.length === 0 ? (
+                                  <div className="no-results">No users found</div>
+                              ) : (
+                                  searchResults.map((user) => (
+                                      <div
+                                          key={user.userId}
+                                          className="search-result-item"
+                                          onClick={() => handleAddMember(user)}
+                                      >
+                                          <div className="member-avatar">
+                                              {user.fullName.charAt(0).toUpperCase()}
+                                          </div>
+                                          <div className="member-info">
+                                              <div className="member-name">{user.fullName}</div>
+                                              <div className="member-email">{user.email}</div>
+                                          </div>
+                                          <Plus size={18} className="add-icon" />
+                                      </div>
+                                  ))
+                              )}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          )}
+
+          {/* 2. Create Project Modal (MUST BE OUTSIDE THE BLOCK ABOVE) */}
+          {showCreateModal && (
+              teamId ? (
+                  <CreateProjectModal
+                      onClose={() => setShowCreateModal(false)}
+                      onProjectCreated={() => {
+                          setShowCreateModal(false);
+                          fetchProjects();
+                      }}
+                      teamId={teamId}
+                  />
+              ) : (
+                  /* Error Fallback if Team ID is missing */
+                  <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+                      <div className="modal" style={{padding: '20px', textAlign: 'center', background: '#2a2a3e', color: 'white', borderRadius: '12px'}}>
+                          <h3>Error</h3>
+                          <p>Missing Team ID. Please log out and log back in.</p>
+                          <button className="btn btn-primary" onClick={() => setShowCreateModal(false)}>Close</button>
+                      </div>
+                  </div>
+              )
+          )}
       </div>
     </div>
   );

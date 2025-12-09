@@ -42,6 +42,11 @@ public class ProjectController {
         return ResponseEntity.ok(Map.of("message", "User added successfully"));
     }
 
+    @PostMapping
+    public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectDTO projectDTO, Authentication auth) {
+        return ResponseEntity.ok(projectService.createProject(projectDTO, auth.getName()));
+    }
+
     @GetMapping("/search-users")
     public ResponseEntity<List<UserSummaryDTO>> searchUsers(@RequestParam String query) {
         return ResponseEntity.ok(projectService.searchUsers(query));

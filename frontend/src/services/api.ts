@@ -52,7 +52,17 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
+export interface CreateTaskRequest {
+    taskName: string;
+    description: string;
+    priority: string;
+    dueDate: string;
+    projectId: number;
+    assignedUserId?: number;
+}
+
 export interface AuthResponse {
+  teamMember: string;
   token: string;
   type: string;
   userId: number;
@@ -61,6 +71,8 @@ export interface AuthResponse {
   teamId: number;
   teamName: string;
 }
+
+
 
 export interface DashboardStats {
   score: string;
@@ -111,6 +123,13 @@ export interface Task {
   startDate: string;
   projectId: number;
   assignedUserName?: string;
+}
+
+export interface CreateProjectRequest {
+    projectName: string;
+    description: string;
+    startDate: string;
+    teamId: number;
 }
 
 export interface UserSearchResult {
@@ -186,6 +205,10 @@ export const projectsAPI = {
     const response = await api.get(`/projects/search-users?query=${encodeURIComponent(query)}`);
     return response.data;
   },
+  createProject: async (projectData: CreateProjectRequest): Promise<Project> => {
+    const response = await api.post('/projects', projectData);
+    return response.data;
+  },
 };
 
 // Tasks API
@@ -198,6 +221,11 @@ export const tasksAPI = {
     const response = await api.get(`/tasks/project/${projectId}`);
     return response.data;
   },
+  createTask: async (taskData: CreateTaskRequest): Promise<Task> => {
+    const response = await api.post('/tasks', taskData);
+    return response.data;
+  },
+
 };
 
 export default api;

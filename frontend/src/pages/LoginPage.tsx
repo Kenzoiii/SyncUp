@@ -66,7 +66,8 @@ const LoginPage: React.FC = () => {
           email: response.email,
           fullName: response.fullName,
           teamId: response.teamId,
-          teamName: response.teamName
+          teamName: response.teamName,
+          teamMember: response.teamMember,
         }));
         
         navigate('/dashboard');
