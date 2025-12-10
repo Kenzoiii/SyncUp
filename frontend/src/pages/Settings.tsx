@@ -3,6 +3,7 @@ import { User, Lock, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
 import { usersAPI, authAPI } from '../services/api'; // Import authAPI for logout
 import '../styles/Dashboard.css';
 
+//test para ma push
 const Settings: React.FC = () => {
   // --- Profile State ---
   const [fullName, setFullName] = useState('');
