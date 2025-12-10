@@ -202,6 +202,14 @@ export const teamsAPI = {
     return response.data;
   },
 
+  kickMember: async (teamId: number, userId: number): Promise<void> => {
+    await api.delete(`/teams/${teamId}/members/${userId}`);
+  },
+
+  updateMemberRole: async (teamId: number, userId: number, role: 'ADMIN' | 'MEMBER'): Promise<void> => {
+    await api.put(`/teams/${teamId}/members/${userId}/role`, { role });
+  },
+
   deleteTeam: async (teamId: number): Promise<void> => {
     await api.delete(`/teams/${teamId}`);
   },
@@ -229,6 +237,10 @@ export const dashboardAPI = {
 export const usersAPI = {
   getMe: async (): Promise<UserProfile> => {
     const response = await api.get('/users/me');
+    return response.data;
+  },
+  checkNameAvailability: async (fullName: string): Promise<{ available: boolean; message: string }> => {
+    const response = await api.get(`/users/check-name`, { params: { fullName } });
     return response.data;
   },
   updateMe: async (payload: UpdateProfileRequest): Promise<UserProfile> => {

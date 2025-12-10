@@ -65,4 +65,13 @@ public class UserController {
         // You can refactor this later to use the specific methods too if needed
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/check-name")
+    public ResponseEntity<Map<String, Object>> checkName(@RequestParam("fullName") String fullName) {
+        boolean exists = userRepository.existsByFullNameIgnoreCase(fullName);
+        return ResponseEntity.ok(Map.of(
+                "available", !exists,
+                "message", exists ? "Name already in use" : "Name is available"
+        ));
+    }
 }

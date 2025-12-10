@@ -18,6 +18,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Standard efficient lookups
     List<Task> findByAssignedUserId(Long assignedUserId);
 
+    void deleteByAssignedUserId(Long assignedUserId);
+
+    void deleteByProjectIdInAndAssignedUserId(List<Long> projectIds, Long assignedUserId);
+
     // DASHBOARD COUNTS (Very fast, returns a simple number)
     long countByStatus(Task.Status status);
     long countByAssignedUserIdAndStatus(Long userId, Task.Status status);

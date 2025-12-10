@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { BarChart3, User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import { authAPI, RegisterRequest } from '../services/api';
+import { authAPI, RegisterRequest, usersAPI } from '../services/api';
 import '../styles/RegisterPage.css';
 
 const RegisterPage: React.FC = () => {
@@ -73,9 +73,19 @@ const RegisterPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1 && validateStep1()) {
-      setStep(2);
+      try {
+        const res = await usersAPI.checkNameAvailability(formData.fullName.trim());
+        if (!res.available) {
+          setErrors(prev => ({ ...prev, fullName: 'Name already in use' }));
+          return; // Block moving to step 2
+        }
+        setStep(2);
+      } catch (err) {
+        // If API fails, be conservative and block progression
+        setErrors(prev => ({ ...prev, fullName: 'Unable to verify name. Please try again.' }));
+      }
     }
   };
 
@@ -113,25 +123,27 @@ const RegisterPage: React.FC = () => {
         navigate('/dashboard');
       } catch (error: any) {
         console.error('Registration error:', error);
-        setErrors({ general: error.response?.data || 'Registration failed. Please try again.' });
+        const serverMessage: string | undefined = error?.response?.data?.message || error?.response?.data || error?.message;
+        const msg = (typeof serverMessage === 'string') ? serverMessage : 'Registration failed. Please try again.';
+        // Map known messages to specific fields
+        if (error?.response?.status === 403) {
+          // Treat forbidden here as duplicate or blocked registration, show under email for clarity
+          setErrors(prev => ({ ...prev, email: 'Email already in use' }));
+        } else if (msg.toLowerCase().includes('email')) {
+          setErrors(prev => ({ ...prev, email: msg }));
+        } else if (msg.toLowerCase().includes('name')) {
+          setErrors(prev => ({ ...prev, fullName: msg }));
+        } else if (msg.toLowerCase().includes('password')) {
+          setErrors(prev => ({ ...prev, confirmPassword: msg }));
+        } else {
+          setErrors({ general: msg });
+        }
       }
     }
   };
 
   return (
     <div className="register-page">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-icon">
-          <BarChart3 size={24} />
-        </div>
-        <div className="sidebar-nav">
-          <div className="sidebar-item">My tasks</div>
-          <div className="sidebar-item">Projects</div>
-          <div className="sidebar-item">Dashboard</div>
-        </div>
-        <div className="sidebar-logo">SyncUp</div>
-      </div>
 
       {/* Main Content */}
       <div className="main-content">
@@ -195,7 +207,7 @@ const RegisterPage: React.FC = () => {
                     <div className="team-info">
                       <p>
                         Enter your company or team name. If the team name already exists, 
-                        you will be prompted for an invitation code to join. If it's a new name, 
+                        you will be added as a member. If it's a new name, 
                         you'll be the administrator of this team.
                       </p>
                     </div>

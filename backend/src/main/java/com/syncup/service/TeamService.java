@@ -20,9 +20,11 @@ import com.syncup.dto.TeamMemberDTO;
 @RequiredArgsConstructor
 public class TeamService {
 
-    private final TeamRepository teamRepository;
-    private final TeamMemberRepository teamMemberRepository;
-    private final UserRepository userRepository;
+        private final TeamRepository teamRepository;
+        private final TeamMemberRepository teamMemberRepository;
+        private final UserRepository userRepository;
+        private final com.syncup.repository.TaskRepository taskRepository;
+        private final com.syncup.repository.ProjectRepository projectRepository;
 
     @Transactional
     public TeamDTO createTeam(String teamName, String description, String userEmail) {
@@ -121,6 +123,70 @@ public class TeamService {
                         .build())
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void kickMember(Long teamId, Long targetUserId, String requesterEmail) {
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new RuntimeException("Team not found"));
+
+                // Only ADMIN role in this team can kick members
+                TeamMember requesterMembership = teamMemberRepository.findByTeamIdAndUserId(teamId, requester.getId())
+                                .orElseThrow(() -> new RuntimeException("You are not a member of this team"));
+                if (requesterMembership.getRole() != TeamMember.Role.ADMIN) {
+                        throw new RuntimeException("Only Admins can remove members.");
+                }
+
+        TeamMember target = teamMemberRepository.findByTeamIdAndUserId(teamId, targetUserId)
+                .orElseThrow(() -> new RuntimeException("Member not found in this team"));
+
+        // Prevent kicking admins
+        if (target.getRole() == TeamMember.Role.ADMIN) {
+            throw new RuntimeException("Admins cant be kicked");
+        }
+
+                teamMemberRepository.delete(target);
+
+                // Delete tasks assigned to the kicked user within this team's projects only
+                List<Long> projectIds = projectRepository.findByTeamId(teamId)
+                                .stream()
+                                .map(com.syncup.entity.Project::getId)
+                                .collect(Collectors.toList());
+                if (!projectIds.isEmpty()) {
+                        taskRepository.deleteByProjectIdInAndAssignedUserId(projectIds, targetUserId);
+                }
+    }
+
+        @Transactional
+        public void updateMemberRole(Long teamId, Long targetUserId, TeamMember.Role newRole, String requesterEmail) {
+                User requester = userRepository.findByEmail(requesterEmail)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                // Ensure requester is a member and ADMIN
+                TeamMember requesterMembership = teamMemberRepository.findByTeamIdAndUserId(teamId, requester.getId())
+                                .orElseThrow(() -> new RuntimeException("You are not a member of this team"));
+                if (requesterMembership.getRole() != TeamMember.Role.ADMIN) {
+                        throw new RuntimeException("Only Admins can change roles.");
+                }
+
+                TeamMember target = teamMemberRepository.findByTeamIdAndUserId(teamId, targetUserId)
+                                .orElseThrow(() -> new RuntimeException("Member not found in this team"));
+
+                // Prevent demoting the last admin
+                if (target.getRole() == TeamMember.Role.ADMIN && newRole == TeamMember.Role.MEMBER) {
+                        long adminCount = teamMemberRepository.findByTeamId(teamId).stream()
+                                        .filter(tm -> tm.getRole() == TeamMember.Role.ADMIN)
+                                        .count();
+                        if (adminCount <= 1) {
+                                throw new RuntimeException("Cannot demote the only admin");
+                        }
+                }
+
+                target.setRole(newRole);
+                teamMemberRepository.save(target);
+        }
 
     private TeamDTO mapToDTO(Team team) {
         return TeamDTO.builder()

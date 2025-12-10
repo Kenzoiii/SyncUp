@@ -21,10 +21,19 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final com.syncup.repository.TeamMemberRepository teamMemberRepository;
 
     public List<TaskDTO> getMyTasks(String email, Long activeTeamId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // If a team is specified, ensure user is a member; otherwise return empty
+        if (activeTeamId != null) {
+            boolean isMember = teamMemberRepository.existsByTeamIdAndUserId(activeTeamId, user.getId());
+            if (!isMember) {
+                return List.of();
+            }
+        }
 
         // Fetch all assigned tasks
         List<Task> allTasks = taskRepository.findByAssignedUserId(user.getId());
