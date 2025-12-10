@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Lock, CheckCircle, AlertCircle } from 'lucide-react';
-import { usersAPI } from '../services/api';
+import { User, Lock, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
+import { usersAPI, authAPI } from '../services/api'; // Import authAPI for logout
 import '../styles/Dashboard.css';
-
 
 const Settings: React.FC = () => {
   // --- Profile State ---
@@ -38,22 +37,15 @@ const Settings: React.FC = () => {
     try {
       await usersAPI.updateProfile(fullName);
 
-      // 1. Update Local Storage instantly
       const userString = localStorage.getItem('user');
       if (userString) {
         const user = JSON.parse(userString);
         user.fullName = fullName;
         localStorage.setItem('user', JSON.stringify(user));
-
-        // Optional: Dispatch an event if your Dashboard Header listens for updates
         window.dispatchEvent(new Event("storage"));
       }
 
       setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
-
-      // REMOVED: setTimeout(() => window.location.reload(), 1000);
-      // Now the page will NOT refresh.
-
     } catch (err: any) {
       setProfileMessage({ type: 'error', text: 'Failed to update profile.' });
     } finally {
@@ -79,13 +71,18 @@ const Settings: React.FC = () => {
     try {
       await usersAPI.changePassword(passwords.oldPassword, passwords.newPassword);
       setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
-      // Clear the password fields so they are ready for next time
       setPasswords({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to change password.';
       setPasswordMessage({ type: 'error', text: msg });
     } finally {
       setPasswordLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      authAPI.logout();
     }
   };
 
@@ -208,6 +205,32 @@ const Settings: React.FC = () => {
                   {passwordLoading ? 'Updating...' : 'Update Password'}
                 </button>
               </form>
+            </div>
+
+            {/* --- SECTION 3: LOGOUT (Added Back) --- */}
+            <div className="widget" style={{ borderColor: '#f44336' }}>
+              <div className="widget-header">
+                <h3 style={{ color: '#f44336' }}><LogOut size={20} /> Account Actions</h3>
+              </div>
+              <div style={{ padding: '0 0 10px 0' }}>
+                <p style={{ color: '#888', marginBottom: '16px', fontSize: '14px' }}>
+                  Sign out of your account on this device.
+                </p>
+                <button
+                    onClick={handleLogout}
+                    className="btn"
+                    style={{
+                      backgroundColor: 'transparent',
+                      border: '1px solid #f44336',
+                      color: '#f44336',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                >
+                  <LogOut size={16} /> Log Out
+                </button>
+              </div>
             </div>
 
           </div>
