@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByFullNameIgnoreCase(String fullName);
+
     // Search: "SELECT * FROM users WHERE lower(full_name) LIKE %x% OR lower(email) LIKE %x%"
     List<User> findByFullNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String name, String email);
 }

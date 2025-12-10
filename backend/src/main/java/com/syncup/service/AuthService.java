@@ -66,12 +66,24 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         // 1. Validation
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already taken!");
-        }
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("Passwords do not match!");
-        }
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new org.springframework.web.server.ResponseStatusException(
+                                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                                        "Email already in use"
+                        );
+                }
+                if (userRepository.existsByFullNameIgnoreCase(request.getFullName())) {
+                        throw new org.springframework.web.server.ResponseStatusException(
+                                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                                        "Name already in use"
+                        );
+                }
+                if (!request.getPassword().equals(request.getConfirmPassword())) {
+                        throw new org.springframework.web.server.ResponseStatusException(
+                                        org.springframework.http.HttpStatus.BAD_REQUEST,
+                                        "Passwords do not match"
+                        );
+                }
 
         // 2. Create User
         User user = User.builder()
@@ -84,20 +96,22 @@ public class AuthService {
 
         // 3. Create or Find Team
         User finalUser = user;
-        Team team = teamRepository.findByTeamName(request.getTeamName())
-                .orElseGet(() -> {
-                    Team newTeam = new Team(); // We didn't add Builder to Team yet, so constructor is fine
-                    newTeam.setTeamName(request.getTeamName());
-                    newTeam.setDescription("Team created by " + request.getFullName());
-                    newTeam.setAdminUserId(finalUser.getId());
-                    return teamRepository.save(newTeam);
-                });
+                Team team = teamRepository.findByTeamName(request.getTeamName())
+                                .orElseGet(() -> {
+                                        Team newTeam = new Team();
+                                        newTeam.setTeamName(request.getTeamName());
+                                        newTeam.setDescription("Team created by " + request.getFullName());
+                                        newTeam.setAdminUserId(finalUser.getId());
+                                        return teamRepository.save(newTeam);
+                                });
 
         // 4. Add User to Team
         TeamMember membership = new TeamMember();
         membership.setTeamId(team.getId());
         membership.setUserId(user.getId());
-        membership.setRole(TeamMember.Role.ADMIN);
+        // If team existed, add as MEMBER; if newly created, make ADMIN
+        boolean isNewTeam = team.getAdminUserId().equals(finalUser.getId());
+        membership.setRole(isNewTeam ? TeamMember.Role.ADMIN : TeamMember.Role.MEMBER);
         teamMemberRepository.save(membership);
 
         // 5. Initialize Score

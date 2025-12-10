@@ -15,11 +15,13 @@ const Projects: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [addMemberError, setAddMemberError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Get User Context
   const userString = localStorage.getItem('user');
   const user = userString ? JSON.parse(userString) : null;
   const teamId = user?.teamId;
+  const userId = user?.userId;
 
   useEffect(() => {
     fetchProjects();
@@ -31,6 +33,9 @@ const Projects: React.FC = () => {
       // Fetch projects for the ACTIVE team only
       const data = await projectsAPI.getMyProjects(teamId);
       setProjects(data);
+      // Infer admin rights from any project where user is admin
+      const adminFlag = data.some(p => (p.isAdmin === true) || (p.admin === true));
+      setIsAdmin(adminFlag);
       setError(null);
     } catch (err: any) {
       setError('Failed to load projects');
@@ -121,13 +126,15 @@ const Projects: React.FC = () => {
               <h1>Projects</h1>
               <div className="user-score">Overview of your projects</div>
             </div>
-            <button
-                className="btn btn-primary"
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                onClick={() => setShowCreateModal(true)}
-            >
-              <Plus size={18} /> New Project
-            </button>
+            {isAdmin && (
+              <button
+                  className="btn btn-primary"
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  onClick={() => setShowCreateModal(true)}
+              >
+                <Plus size={18} /> New Project
+              </button>
+            )}
           </div>
 
           {loading && <div className="loading-message">Loading projects...</div>}

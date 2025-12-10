@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, Mail, Calendar } from 'lucide-react';
-import { teamsAPI, TeamMember } from '../services/api';
+import { User, Shield, Mail, Calendar, Trash2 } from 'lucide-react';
+import { teamsAPI, TeamMember, Team } from '../services/api';
 import '../styles/Projects.css'; // Re-using card styles
 
 const Members: React.FC = () => {
@@ -8,9 +8,12 @@ const Members: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [teamName, setTeamName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [roleError, setRoleError] = useState<string>('');
 
   useEffect(() => {
     fetchMembers();
+    determineAdmin();
   }, []);
 
   const fetchMembers = async () => {
@@ -36,6 +39,57 @@ const Members: React.FC = () => {
       setError("Failed to load team members.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const determineAdmin = async () => {
+    try {
+      const userString = localStorage.getItem('user');
+      const user = userString ? JSON.parse(userString) : null;
+      const activeTeamId = user?.teamId;
+      if (!activeTeamId) {
+        setIsAdmin(false);
+        return;
+      }
+      const members = await teamsAPI.getTeamMembers(activeTeamId);
+      const me = members.find(m => m.userId === user?.userId);
+      setIsAdmin(!!me && me.role === 'ADMIN');
+    } catch (e) {
+      setIsAdmin(false);
+    }
+  };
+
+  const handleKick = async (member: TeamMember) => {
+    if (!isAdmin) return;
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    const activeTeamId = user?.teamId;
+    if (!activeTeamId) return;
+
+    if (member.role === 'ADMIN') {
+      alert('Admins cant be kicked');
+      return;
+    }
+    if (!window.confirm(`Remove ${member.fullName} from the team?`)) return;
+    try {
+      await teamsAPI.kickMember(activeTeamId, member.userId);
+      fetchMembers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to remove member');
+    }
+  };
+
+  const handleRoleChange = async (member: TeamMember, newRole: 'ADMIN' | 'MEMBER') => {
+    setRoleError('');
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    const activeTeamId = user?.teamId;
+    if (!activeTeamId) return;
+    try {
+      await teamsAPI.updateMemberRole(activeTeamId, member.userId, newRole);
+      fetchMembers();
+    } catch (err: any) {
+      setRoleError(err.response?.data?.message || 'Failed to update role');
     }
   };
 
@@ -92,6 +146,22 @@ const Members: React.FC = () => {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#888', fontSize: '13px', marginTop: '4px' }}>
                                 <Mail size={12} /> {member.email}
                               </div>
+                              {isAdmin && member.userId !== JSON.parse(localStorage.getItem('user') || '{}').userId && (
+                                <div style={{ marginTop: '8px' }}>
+                                  <label style={{ fontSize: 12, color: '#9ca3af', marginRight: 8 }}>Role</label>
+                                  <select
+                                    value={member.role}
+                                    onChange={(e) => handleRoleChange(member, e.target.value as 'ADMIN' | 'MEMBER')}
+                                    className="role-select"
+                                  >
+                                    <option value="ADMIN" className="role-option admin">ADMIN</option>
+                                    <option value="MEMBER" className="role-option member">MEMBER</option>
+                                  </select>
+                                  {roleError && (
+                                    <div style={{ color: '#f44336', fontSize: 12, marginTop: 6 }}>{roleError}</div>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             {/* Joined Date */}
@@ -102,15 +172,26 @@ const Members: React.FC = () => {
                         </span>
                             </div>
 
-                            {/* Role Badge */}
-                            <div style={{
-                              padding: '6px 12px', borderRadius: '20px',
-                              background: member.role === 'ADMIN' ? 'rgba(255, 107, 157, 0.1)' : 'rgba(74, 158, 255, 0.1)',
-                              color: member.role === 'ADMIN' ? '#ff6b9d' : '#4a9eff',
-                              fontSize: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px'
-                            }}>
-                              {member.role === 'ADMIN' ? <Shield size={12}/> : <User size={12}/>}
-                              {member.role}
+                            {/* Role + Kick (aligned in one row, button to the right) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{
+                                padding: '6px 12px', borderRadius: '20px',
+                                background: member.role === 'ADMIN' ? 'rgba(255, 107, 157, 0.1)' : 'rgba(74, 158, 255, 0.1)',
+                                color: member.role === 'ADMIN' ? '#ff6b9d' : '#4a9eff',
+                                fontSize: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px'
+                              }}>
+                                {member.role === 'ADMIN' ? <Shield size={12}/> : <User size={12}/>}
+                                {member.role}
+                              </div>
+                              {isAdmin && member.role !== 'ADMIN' && (
+                                <button
+                                  onClick={() => handleKick(member)}
+                                  style={{ background: 'none', border: '1px solid #f44336', color: '#f44336', borderRadius: 6, padding: '6px 10px', cursor: 'pointer' }}
+                                  title="Remove Member"
+                                >
+                                  <Trash2 size={14} /> Kick
+                                </button>
+                              )}
                             </div>
                           </div>
                       ))}

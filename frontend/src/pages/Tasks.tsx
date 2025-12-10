@@ -1,14 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TaskList from '../components/TaskList';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { Plus } from 'lucide-react';
+import { projectsAPI } from '../services/api';
 import '../styles/Dashboard.css';
 
 const Tasks: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
     // 1. Add this "Refresh Trigger" state
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    useEffect(() => {
+        const determineAdmin = async () => {
+            try {
+                const userString = localStorage.getItem('user');
+                const user = userString ? JSON.parse(userString) : null;
+                const teamId = user?.teamId;
+                const data = await projectsAPI.getMyProjects(teamId);
+                const adminFlag = data.some(p => (p.isAdmin === true) || (p.admin === true));
+                setIsAdmin(adminFlag);
+            } catch (e) {
+                setIsAdmin(false);
+            }
+        };
+        determineAdmin();
+    }, []);
 
     return (
         <div className="dashboard">
@@ -19,13 +37,15 @@ const Tasks: React.FC = () => {
                         <div className="user-score">Manage your assigned tasks</div>
                     </div>
 
-                    <button
-                        className="btn btn-primary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                        onClick={() => setShowCreateModal(true)}
-                    >
-                        <Plus size={18} /> New Task
-                    </button>
+                    {isAdmin && (
+                        <button
+                            className="btn btn-primary"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                            onClick={() => setShowCreateModal(true)}
+                        >
+                            <Plus size={18} /> New Task
+                        </button>
+                    )}
                 </div>
 
                 <div className="dashboard-content">

@@ -772,3 +772,30 @@
     padding: 24px;
   }
 }
+
+/* Role Dropdown Styling */
+.role-select {
+  background-color: var(--primary-bg);
+  color: var(--white);
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.role-select:hover {
+  border-color: var(--teal-accent);
+}
+.role-select:focus {
+  border-color: var(--teal-accent);
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.15);
+}
+
+/* Note: option styling support varies by browser */
+.role-option.admin {
+  color: #ff6b9d;
+}
+.role-option.member {
+  color: #4a9eff;
+}

@@ -63,4 +63,33 @@ public class TeamController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{teamId}/members/{userId}")
+    public ResponseEntity<?> kickMember(@PathVariable Long teamId, @PathVariable Long userId, Authentication auth) {
+        try {
+            teamService.kickMember(teamId, userId, auth.getName());
+            return ResponseEntity.ok(Map.of("message", "Member removed successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{teamId}/members/{userId}/role")
+    public ResponseEntity<?> updateMemberRole(
+            @PathVariable Long teamId,
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request,
+            Authentication auth
+    ) {
+        try {
+            String roleStr = request.getOrDefault("role", "");
+            com.syncup.entity.TeamMember.Role newRole = com.syncup.entity.TeamMember.Role.valueOf(roleStr);
+            teamService.updateMemberRole(teamId, userId, newRole, auth.getName());
+            return ResponseEntity.ok(Map.of("message", "Role updated successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid role specified"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

@@ -93,19 +93,7 @@ const LoginPage: React.FC = () => {
   return (
 
     <div className="login-page">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-icon">
-          <BarChart3 size={24} />
-        </div>
-        <div className="sidebar-nav">
-          <div className="sidebar-item">My tasks</div>
-          <div className="sidebar-item">Projects</div>
-          <div className="sidebar-item">Dashboard</div>
-        </div>
-        <div className="sidebar-logo">SyncUp</div>
-      </div>
-
+     
       {/* Main Content */}
       <div className="main-content">
         <div className="login-content">
