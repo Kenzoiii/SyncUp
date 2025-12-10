@@ -3,6 +3,8 @@ import { User, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import { usersAPI } from '../services/api';
 import '../styles/Dashboard.css';
 
+
+//test para maka push
 const Settings: React.FC = () => {
   // --- Profile State ---
   const [fullName, setFullName] = useState('');
