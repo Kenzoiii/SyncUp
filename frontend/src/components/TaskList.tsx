@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import {Calendar, Clock, AlertCircle, CheckCircle, Trash2} from 'lucide-react';
 import { tasksAPI, Task } from '../services/api';
 import '../styles/TaskList.css';
 
@@ -16,12 +16,19 @@ const TaskList: React.FC = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true);
-      const data = await tasksAPI.getMyTasks();
+
+      // 1. Get Active Team ID
+      const userString = localStorage.getItem('user');
+      const user = userString ? JSON.parse(userString) : null;
+      const activeTeamId = user?.teamId;
+
+      // 2. Pass it to API
+      const data = await tasksAPI.getMyTasks(activeTeamId);
+
       setTasks(data);
       setError(null);
     } catch (err: any) {
       setError('Failed to load tasks');
-      console.error('Error fetching tasks:', err);
     } finally {
       setLoading(false);
     }
@@ -69,6 +76,16 @@ const TaskList: React.FC = () => {
     const due = new Date(dueDate);
     const now = new Date();
     return due < now;
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      await tasksAPI.deleteTask(taskId);
+      fetchTasks(); // Refresh list
+    } catch (err) {
+      console.error("Failed to delete task", err);
+    }
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -127,14 +144,24 @@ const TaskList: React.FC = () => {
               <div className="task-status-icon">
                 {getStatusIcon(task.status)}
               </div>
-              <span
-                className="task-priority"
-                style={{ backgroundColor: getPriorityColor(task.priority) }}
-              >
-                {task.priority}
-              </span>
-            </div>
 
+              {/* GROUP PRIORITY AND DELETE BUTTON TOGETHER */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span
+                    className="task-priority"
+                    style={{ backgroundColor: getPriorityColor(task.priority) }}
+                >
+                  {task.priority}
+                </span>
+                <button
+                    onClick={() => handleDeleteTask(task.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0 }}
+                    className="delete-task-btn" // You can add hover styles in CSS if you want
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
             <h3 className="task-title">{task.taskName}</h3>
             <p className="task-description">{task.description || 'No description'}</p>
 

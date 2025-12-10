@@ -22,11 +22,21 @@ public class TaskService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
 
-    public List<TaskDTO> getMyTasks(String email) {
+    public List<TaskDTO> getMyTasks(String email, Long activeTeamId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return taskRepository.findByAssignedUserId(user.getId()).stream()
+        // Fetch all assigned tasks
+        List<Task> allTasks = taskRepository.findByAssignedUserId(user.getId());
+
+        // FILTER: Only keep tasks where the Project's Team ID matches activeTeamId
+        if (activeTeamId != null) {
+            allTasks = allTasks.stream()
+                    .filter(task -> task.getProject().getTeamId().equals(activeTeamId))
+                    .collect(Collectors.toList());
+        }
+
+        return allTasks.stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -62,6 +72,14 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
         return mapToDTO(savedTask);
+    }
+
+    @Transactional
+    public void deleteTask(Long taskId) {
+        if (!taskRepository.existsById(taskId)) {
+            throw new RuntimeException("Task not found");
+        }
+        taskRepository.deleteById(taskId);
     }
 
     private TaskDTO mapToDTO(Task task) {
