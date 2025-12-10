@@ -235,6 +235,18 @@ export const usersAPI = {
     const response = await api.put('/users/me', payload);
     return response.data;
   },
+  updateProfile: async (fullName: string) => {
+    const response = await api.put('/users/profile', { fullName });
+    return response.data;
+  },
+
+  changePassword: async (oldPassword: string, newPassword: string) => {
+    const response = await api.post('/users/change-password', {
+      oldPassword,
+      newPassword
+    });
+    return response.data;
+  }
 };
 
 // Projects API

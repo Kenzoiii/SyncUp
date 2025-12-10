@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, User, Flag, Briefcase } from 'lucide-react';
 import { projectsAPI, tasksAPI, Project, ProjectMember } from '../services/api';
-import '../styles/CreateTaskModal.css'; // We will create this small CSS file next
+import '../styles/CreateTaskModal.css';
 
 interface CreateTaskModalProps {
     onClose: () => void;
@@ -11,6 +11,7 @@ interface CreateTaskModalProps {
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreated }) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [members, setMembers] = useState<ProjectMember[]>([]);
+
     const [selectedProjectId, setSelectedProjectId] = useState<string>('');
     const [formData, setFormData] = useState({
         taskName: '',
@@ -23,20 +24,26 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // 1. Fetch Projects on load
+    // 1. GET ACTIVE TEAM ID
+    const userString = localStorage.getItem('user');
+    const user = userString ? JSON.parse(userString) : null;
+    const activeTeamId = user?.teamId;
+
+    // 2. Fetch Projects (FILTERED BY TEAM)
     useEffect(() => {
         const loadProjects = async () => {
             try {
-                const data = await projectsAPI.getMyProjects();
+                // Pass the activeTeamId here!
+                const data = await projectsAPI.getMyProjects(activeTeamId);
                 setProjects(data);
             } catch (err) {
                 setError('Failed to load projects');
             }
         };
         loadProjects();
-    }, []);
+    }, [activeTeamId]); // Reload if team changes
 
-    // 2. Fetch Members when Project changes
+    // 3. Fetch Members when Project changes
     useEffect(() => {
         if (!selectedProjectId) {
             setMembers([]);
@@ -59,13 +66,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
             setError("Please select a project.");
             return;
         }
+        // Validation: Ensure a user is assigned
+        if (!formData.assignedUserId) {
+            setError("Please assign this task to a team member.");
+            return;
+        }
 
         setLoading(true);
         try {
             await tasksAPI.createTask({
                 ...formData,
                 projectId: Number(selectedProjectId),
-                assignedUserId: formData.assignedUserId ? Number(formData.assignedUserId) : undefined
+                assignedUserId: Number(formData.assignedUserId)
             });
             onTaskCreated();
             onClose();
@@ -78,13 +90,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            {/* Used 'modal' class to match Dashboard.css */}
             <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', width: '100%' }}>
                 <div className="modal-header">
                     <h3>Create New Task</h3>
-                    <button className="modal-close-btn" onClick={onClose}>
-                        <X size={20} />
-                    </button>
+                    <button className="modal-close-btn" onClick={onClose}><X size={20} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="modal-form">
@@ -106,7 +115,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
                         </select>
                     </div>
 
-                    {/* Task Name */}
+                    {/* Task Details */}
                     <div className="form-group">
                         <label className="label-text">Task Name</label>
                         <input
@@ -118,7 +127,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
                         />
                     </div>
 
-                    {/* Description */}
                     <div className="form-group">
                         <label className="label-text">Description</label>
                         <textarea
@@ -138,8 +146,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
                                 value={formData.assignedUserId}
                                 onChange={e => setFormData({...formData, assignedUserId: e.target.value})}
                                 disabled={!selectedProjectId}
+                                required // <--- FORCE SELECTION
                             >
-                                <option value="">Unassigned</option>
+                                <option value="">Select Member...</option>
                                 {members.map(m => (
                                     <option key={m.userId} value={m.userId}>{m.fullName}</option>
                                 ))}
@@ -168,6 +177,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ onClose, onTaskCreate
                             className="input"
                             value={formData.dueDate}
                             onChange={e => setFormData({...formData, dueDate: e.target.value})}
+                            required // <--- Good practice to make date mandatory too
                         />
                     </div>
 
