@@ -49,9 +49,10 @@
 
 .project-card-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Pushes Status to left, Delete to right */
   align-items: center;
   margin-bottom: 12px;
+  width: 100%;
 }
 
 .project-icon {

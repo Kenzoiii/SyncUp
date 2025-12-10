@@ -26,22 +26,28 @@ api.interceptors.request.use(
 
 // Add response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      // Token is invalid or expired
-      console.error('Authentication failed. Redirecting to login...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    (response) => response,
+    (error) => {
+      const isLoginRequest = error.config && error.config.url.includes('/auth/login');
+
+      // ONLY logout on 401 (Token Expired). IGNORE 403.
+      if (error.response?.status === 401 && !isLoginRequest) {
+        console.error('Authentication failed. Redirecting to login...');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
 );
 
 export interface LoginRequest {
   email: string;
   password: string;
+}
+export interface TeamRequest {
+  teamName: string;
+  description?: string;
 }
 
 export interface RegisterRequest {
@@ -52,7 +58,17 @@ export interface RegisterRequest {
   confirmPassword: string;
 }
 
+export interface CreateTaskRequest {
+    taskName: string;
+    description: string;
+    priority: string;
+    dueDate: string;
+    projectId: number;
+    assignedUserId?: number;
+}
+
 export interface AuthResponse {
+  teamMember: string;
   token: string;
   type: string;
   userId: number;
@@ -60,6 +76,13 @@ export interface AuthResponse {
   fullName: string;
   teamId: number;
   teamName: string;
+}
+
+export interface Team {
+  id: number;
+  teamName: string;
+  description: string;
+  adminUserId: number; //
 }
 
 export interface DashboardStats {
@@ -91,7 +114,8 @@ export interface Project {
   status: string;
   progressPercentage: number;
   teamId: number;
-  isAdmin: boolean;
+  isAdmin?: boolean;
+  admin?: boolean;
 }
 
 export interface ProjectMember {
@@ -111,6 +135,20 @@ export interface Task {
   startDate: string;
   projectId: number;
   assignedUserName?: string;
+}
+export interface TeamMember {
+  userId: number;
+  fullName: string;
+  email: string;
+  role: string;
+  joinedAt?: string;
+}
+
+export interface CreateProjectRequest {
+    projectName: string;
+    description: string;
+    startDate: string;
+    teamId: number;
 }
 
 export interface UserSearchResult {
@@ -132,9 +170,40 @@ export const authAPI = {
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.warn("Server logout failed, but clearing local session anyway.");
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+  },
+};
+
+export const teamsAPI = {
+  createTeam: async (data: TeamRequest) => {
+    const response = await api.post('/teams/create', data);
+    return response.data;
+  },
+  joinTeam: async (teamName: string) => {
+    const response = await api.post('/teams/join', { teamName });
+    return response.data;
+  },
+  // NEW FUNCTION
+  getMyTeams: async (): Promise<Team[]> => {
+    const response = await api.get('/teams/my-teams');
+    return response.data;
+  },
+
+  getTeamMembers: async (teamId: number): Promise<TeamMember[]> => {
+    const response = await api.get(`/teams/${teamId}/members`);
+    return response.data;
+  },
+
+  deleteTeam: async (teamId: number): Promise<void> => {
+    await api.delete(`/teams/${teamId}`);
   },
 };
 
@@ -170,8 +239,9 @@ export const usersAPI = {
 
 // Projects API
 export const projectsAPI = {
-  getMyProjects: async (): Promise<Project[]> => {
-    const response = await api.get('/projects/my-projects');
+  getMyProjects: async (teamId?: number): Promise<Project[]> => {
+    const url = teamId ? `/projects/my-projects?teamId=${teamId}` : '/projects/my-projects';
+    const response = await api.get(url);
     return response.data;
   },
   getProjectMembers: async (projectId: number): Promise<ProjectMember[]> => {
@@ -186,17 +256,32 @@ export const projectsAPI = {
     const response = await api.get(`/projects/search-users?query=${encodeURIComponent(query)}`);
     return response.data;
   },
+  createProject: async (projectData: CreateProjectRequest): Promise<Project> => {
+    const response = await api.post('/projects', projectData);
+    return response.data;
+  },
+  deleteProject: async (projectId: number): Promise<void> => {
+    await api.delete(`/projects/${projectId}`);
+  },
 };
 
 // Tasks API
 export const tasksAPI = {
-  getMyTasks: async (): Promise<Task[]> => {
-    const response = await api.get('/tasks/my-tasks');
+  getMyTasks: async (teamId?: number): Promise<Task[]> => {
+    const url = teamId ? `/tasks/my-tasks?teamId=${teamId}` : '/tasks/my-tasks';
+    const response = await api.get(url);
     return response.data;
   },
   getProjectTasks: async (projectId: number): Promise<Task[]> => {
     const response = await api.get(`/tasks/project/${projectId}`);
     return response.data;
+  },
+  createTask: async (taskData: CreateTaskRequest): Promise<Task> => {
+    const response = await api.post('/tasks', taskData);
+    return response.data;
+  },
+  deleteTask: async (taskId: number): Promise<void> => {
+    await api.delete(`/tasks/${taskId}`);
   },
 };
 

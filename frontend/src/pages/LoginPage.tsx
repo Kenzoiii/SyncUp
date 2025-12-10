@@ -19,12 +19,18 @@ const LoginPage: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
+
+    // Clear specific field errors
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
+    }
+
+    // NEW: Clear the main "general" error when user starts typing
+    if (errors.general) {
+      setErrors(prev => ({ ...prev, general: '' }));
     }
   };
 
@@ -49,14 +55,14 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       try {
         const loginData: LoginRequest = {
           email: formData.email,
           password: formData.password
         };
-        
+
         const response = await authAPI.login(loginData);
         
         // Store token and user data
@@ -66,23 +72,26 @@ const LoginPage: React.FC = () => {
           email: response.email,
           fullName: response.fullName,
           teamId: response.teamId,
-          teamName: response.teamName
+          teamName: response.teamName,
+          teamMember: response.teamMember,
         }));
-        
+
         navigate('/dashboard');
       } catch (error: any) {
         console.error('Login error:', error);
-        setErrors({ general: error.response?.data || 'Login failed. Please try again.' });
+        // FIX: Check for detailed error message, or default to "Invalid credentials"
+        const errorMessage = error.response?.data?.message || error.response?.data || 'Invalid email or password';
+        setErrors({ general: errorMessage });
       }
     }
   };
 
   const handleSocialLogin = (provider: string) => {
     console.log(`Login with ${provider}`);
-    // TODO: Implement social login
   };
 
   return (
+
     <div className="login-page">
       {/* Sidebar */}
       <div className="sidebar">
@@ -114,6 +123,21 @@ const LoginPage: React.FC = () => {
           {/* Right Side - Login Form */}
           <div className="form-section">
             <div className="form-container">
+              {errors.general && (
+                  <div style={{
+                    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                    border: '1px solid #f44336',
+                    color: '#f44336',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    marginBottom: '20px',
+                    textAlign: 'center',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    {errors.general}
+                  </div>
+              )}
               <form onSubmit={handleSubmit} className="login-form">
                 <div className="form-group">
                   <div className="input-container">
@@ -127,7 +151,7 @@ const LoginPage: React.FC = () => {
                       className={`input ${errors.email ? 'input-error' : ''}`}
                     />
                   </div>
-                  {errors.email && <span className="error-message">{errors.email}</span>}
+
                 </div>
 
                 <div className="form-group">

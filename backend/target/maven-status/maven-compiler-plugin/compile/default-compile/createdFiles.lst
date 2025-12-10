@@ -14,10 +14,13 @@ com\syncup\dto\LoginRequest$LoginRequestBuilder.class
 com\syncup\dto\RegisterRequest$RegisterRequestBuilder.class
 com\syncup\repository\NotificationRepository.class
 com\syncup\dto\TeamMemberDTO$TeamMemberDTOBuilder.class
+com\syncup\service\TeamService.class
 com\syncup\dto\TaskDTO$TaskDTOBuilder.class
 com\syncup\service\ProjectService.class
 com\syncup\controller\UserController.class
+com\syncup\dto\TeamDTO.class
 com\syncup\SyncupBackendApplication.class
+com\syncup\controller\TeamController.class
 com\syncup\entity\TeamMember$Role.class
 com\syncup\entity\Task$TaskBuilder.class
 com\syncup\entity\Task$Status.class
@@ -55,6 +58,7 @@ com\syncup\dto\AuthResponse.class
 com\syncup\entity\Project$Status.class
 com\syncup\config\JpaConfig.class
 com\syncup\repository\TeamRepository.class
+com\syncup\dto\TeamDTO$TeamDTOBuilder.class
 com\syncup\dto\UserDTO$UserDTOBuilder.class
 com\syncup\dto\ProjectDTO.class
 com\syncup\entity\User$UserBuilder.class

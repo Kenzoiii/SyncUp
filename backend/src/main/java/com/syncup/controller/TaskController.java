@@ -18,8 +18,11 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/my-tasks")
-    public ResponseEntity<List<TaskDTO>> getMyTasks(Authentication auth) {
-        return ResponseEntity.ok(taskService.getMyTasks(auth.getName()));
+    public ResponseEntity<List<TaskDTO>> getMyTasks(
+            Authentication auth,
+            @RequestParam(required = false) Long teamId // <--- Add this param
+    ) {
+        return ResponseEntity.ok(taskService.getMyTasks(auth.getName(), teamId));
     }
 
     @GetMapping("/project/{projectId}")
@@ -31,5 +34,11 @@ public class TaskController {
     @PostMapping
     public ResponseEntity<TaskDTO> createTask(@RequestBody TaskDTO taskDto, Authentication auth) {
         return ResponseEntity.ok(taskService.createTask(taskDto, auth.getName()));
+    }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId) {
+        taskService.deleteTask(taskId);
+        return ResponseEntity.ok().build();
     }
 }
