@@ -18,9 +18,10 @@ const Tasks: React.FC = () => {
                 const userString = localStorage.getItem('user');
                 const user = userString ? JSON.parse(userString) : null;
                 const teamId = user?.teamId;
-                const data = await projectsAPI.getMyProjects(teamId);
-                const adminFlag = data.some(p => (p.isAdmin === true) || (p.admin === true));
-                setIsAdmin(adminFlag);
+                if (!teamId) { setIsAdmin(false); return; }
+                const { teamsAPI } = await import('../services/api');
+                const { role } = await teamsAPI.getMyRole(teamId);
+                setIsAdmin(role === 'ADMIN');
             } catch (e) {
                 setIsAdmin(false);
             }

@@ -56,6 +56,16 @@ public class Task {
     @Builder.Default
     private Integer completionPercentage = 0;
 
+    @Column(name = "submission_link", length = 500)
+    private String submissionLink;
+
+    @Column(name = "submitted")
+    @Builder.Default
+    private Boolean submitted = false;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", insertable = false, updatable = false)
     @ToString.Exclude

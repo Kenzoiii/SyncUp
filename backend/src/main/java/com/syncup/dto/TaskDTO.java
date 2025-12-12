@@ -16,4 +16,7 @@ public class TaskDTO {
     private Long projectId;
     private Long assignedUserId;
     private String assignedUserName;
+    private String submissionLink;
+    private Boolean submitted;
+    private java.time.LocalDateTime submittedAt;
 }

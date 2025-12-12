@@ -41,4 +41,15 @@ public class TaskController {
         taskService.deleteTask(taskId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{taskId}/submit")
+    public ResponseEntity<TaskDTO> submitTask(@PathVariable Long taskId, @RequestBody java.util.Map<String, String> body) {
+        String link = body.get("submissionLink");
+        return ResponseEntity.ok(taskService.submitTask(taskId, link));
+    }
+
+    @PostMapping("/{taskId}/unsubmit")
+    public ResponseEntity<TaskDTO> unsubmitTask(@PathVariable Long taskId) {
+        return ResponseEntity.ok(taskService.unsubmitTask(taskId));
+    }
 }

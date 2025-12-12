@@ -63,6 +63,7 @@ CREATE TABLE tasks (
     priority ENUM('LOW', 'MEDIUM', 'HIGH', 'URGENT') DEFAULT 'MEDIUM',
     start_date DATE,
     due_date DATE,
+    submission_link VARCHAR(500),
     completion_percentage INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

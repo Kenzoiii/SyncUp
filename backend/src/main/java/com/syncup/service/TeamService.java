@@ -196,4 +196,14 @@ public class TeamService {
                 .adminUserId(team.getAdminUserId()) // <-- MAP THIS FIELD
                 .build();
     }
+
+        public String getMyRole(Long teamId, String userEmail) {
+                User user = userRepository.findByEmail(userEmail)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                TeamMember membership = teamMemberRepository.findByTeamIdAndUserId(teamId, user.getId())
+                                .orElseThrow(() -> new RuntimeException("You are not a member of this team"));
+
+                return membership.getRole().name();
+        }
 }

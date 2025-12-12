@@ -135,6 +135,9 @@ export interface Task {
   startDate: string;
   projectId: number;
   assignedUserName?: string;
+  submissionLink?: string;
+  submitted?: boolean;
+  submittedAt?: string;
 }
 export interface TeamMember {
   userId: number;
@@ -212,6 +215,10 @@ export const teamsAPI = {
 
   deleteTeam: async (teamId: number): Promise<void> => {
     await api.delete(`/teams/${teamId}`);
+  },
+  getMyRole: async (teamId: number): Promise<{ role: 'ADMIN' | 'MEMBER' }> => {
+    const response = await api.get(`/teams/${teamId}/me`);
+    return response.data;
   },
 };
 
@@ -306,6 +313,14 @@ export const tasksAPI = {
   },
   deleteTask: async (taskId: number): Promise<void> => {
     await api.delete(`/tasks/${taskId}`);
+  },
+  submitTask: async (taskId: number, submissionLink: string): Promise<Task> => {
+    const response = await api.post(`/tasks/${taskId}/submit`, { submissionLink });
+    return response.data;
+  },
+  unsubmitTask: async (taskId: number): Promise<Task> => {
+    const response = await api.post(`/tasks/${taskId}/unsubmit`);
+    return response.data;
   },
 };
 

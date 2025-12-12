@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {Calendar, Clock, AlertCircle, CheckCircle, Trash2} from 'lucide-react';
 import { tasksAPI, Task } from '../services/api';
 import '../styles/TaskList.css';
+import TaskDetailModal from './TaskDetailModal';
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks();
@@ -97,6 +99,9 @@ const TaskList: React.FC = () => {
     return true;
   });
 
+  const pendingTasks = tasks.filter(t => t.status.toUpperCase() !== 'COMPLETED');
+  const completedTasks = tasks.filter(t => t.status.toUpperCase() === 'COMPLETED');
+
   return (
     <div className="task-list-container">
       <div className="task-list-header">
@@ -134,67 +139,188 @@ const TaskList: React.FC = () => {
         </div>
       )}
 
-      <div className="tasks-grid">
-        {filteredTasks.map((task) => (
-          <div
-            key={task.id}
-            className={`task-card ${isOverdue(task.dueDate, task.status) ? 'overdue' : ''}`}
-          >
-            <div className="task-card-header">
-              <div className="task-status-icon">
-                {getStatusIcon(task.status)}
-              </div>
-
-              {/* GROUP PRIORITY AND DELETE BUTTON TOGETHER */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span
-                    className="task-priority"
-                    style={{ backgroundColor: getPriorityColor(task.priority) }}
-                >
-                  {task.priority}
-                </span>
-                <button
-                    onClick={() => handleDeleteTask(task.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0 }}
-                    className="delete-task-btn" // You can add hover styles in CSS if you want
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-            <h3 className="task-title">{task.taskName}</h3>
-            <p className="task-description">{task.description || 'No description'}</p>
-
-            <div className="task-dates">
-              <div className="date-item">
-                <Calendar size={16} />
-                <div className="date-info">
-                  <span className="date-label">Start Date</span>
-                  <span className="date-value">{formatDate(task.startDate)}</span>
+      {/* If 'all', show grouped sections; otherwise show filtered list */}
+      {filter === 'all' ? (
+        <>
+          <h3 style={{ margin: '16px 0 8px', color: '#1a1a1a' }}>Pending</h3>
+          <div className="tasks-grid">
+            {pendingTasks.map((task) => (
+              <div
+                key={task.id}
+                className={`task-card ${isOverdue(task.dueDate, task.status) ? 'overdue' : ''}`}
+                onClick={() => setSelectedTask(task)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="task-card-header">
+                  <div className="task-status-icon">
+                    {getStatusIcon(task.status)}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span
+                        className="task-priority"
+                        style={{ backgroundColor: getPriorityColor(task.priority) }}
+                    >
+                      {task.priority}
+                    </span>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0 }}
+                        className="delete-task-btn"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="date-item">
-                <Clock size={16} />
-                <div className="date-info">
-                  <span className="date-label">Deadline</span>
-                  <span className={`date-value ${isOverdue(task.dueDate, task.status) ? 'overdue-text' : ''}`}>
-                    {formatDate(task.dueDate)}
+                <h3 className="task-title">{task.taskName}</h3>
+                <p className="task-description">{task.description || 'No description'}</p>
+
+                <div className="task-dates">
+                  <div className="date-item">
+                    <Calendar size={16} />
+                    <div className="date-info">
+                      <span className="date-label">Start Date</span>
+                      <span className="date-value">{formatDate(task.startDate)}</span>
+                    </div>
+                  </div>
+                  <div className="date-item">
+                    <Clock size={16} />
+                    <div className="date-info">
+                      <span className="date-label">Deadline</span>
+                      <span className={`date-value ${isOverdue(task.dueDate, task.status) ? 'overdue-text' : ''}`}>
+                        {formatDate(task.dueDate)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="task-footer">
+                  <span className="task-status-badge">
+                    {task.status.replace('_', ' ')}
                   </span>
+                  {isOverdue(task.dueDate, task.status) && (
+                    <span className="overdue-badge">Overdue</span>
+                  )}
                 </div>
               </div>
-            </div>
-
-            <div className="task-footer">
-              <span className="task-status-badge">
-                {task.status.replace('_', ' ')}
-              </span>
-              {isOverdue(task.dueDate, task.status) && (
-                <span className="overdue-badge">Overdue</span>
-              )}
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+
+          <h3 style={{ margin: '24px 0 8px', color: '#1a1a1a' }}>Completed</h3>
+          <div className="tasks-grid">
+            {completedTasks.map((task) => (
+              <div
+                key={task.id}
+                className={`task-card`}
+                onClick={() => setSelectedTask(task)}
+                style={{ cursor: 'pointer', opacity: 0.95 }}
+              >
+                <div className="task-card-header">
+                  <div className="task-status-icon">
+                    {getStatusIcon(task.status)}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span className="task-priority" style={{ backgroundColor: getPriorityColor(task.priority) }}>
+                      {task.priority}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0 }}
+                      className="delete-task-btn"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <h3 className="task-title">{task.taskName}</h3>
+                <p className="task-description">{task.description || 'No description'}</p>
+
+                <div className="task-footer">
+                  <span className="task-status-badge">
+                    {task.status.replace('_', ' ')}
+                  </span>
+                  {/* Submission link hidden per request */}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="tasks-grid">
+          {filteredTasks.map((task) => (
+            <div
+              key={task.id}
+              className={`task-card ${isOverdue(task.dueDate, task.status) ? 'overdue' : ''}`}
+              onClick={() => setSelectedTask(task)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="task-card-header">
+                <div className="task-status-icon">
+                  {getStatusIcon(task.status)}
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span
+                      className="task-priority"
+                      style={{ backgroundColor: getPriorityColor(task.priority) }}
+                  >
+                    {task.priority}
+                  </span>
+                  <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', padding: 0 }}
+                      className="delete-task-btn"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+              <h3 className="task-title">{task.taskName}</h3>
+              <p className="task-description">{task.description || 'No description'}</p>
+
+              <div className="task-dates">
+                <div className="date-item">
+                  <Calendar size={16} />
+                  <div className="date-info">
+                    <span className="date-label">Start Date</span>
+                    <span className="date-value">{formatDate(task.startDate)}</span>
+                  </div>
+                </div>
+                <div className="date-item">
+                  <Clock size={16} />
+                  <div className="date-info">
+                    <span className="date-label">Deadline</span>
+                    <span className={`date-value ${isOverdue(task.dueDate, task.status) ? 'overdue-text' : ''}`}>
+                      {formatDate(task.dueDate)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="task-footer">
+                <span className="task-status-badge">
+                  {task.status.replace('_', ' ')}
+                </span>
+                {isOverdue(task.dueDate, task.status) && (
+                  <span className="overdue-badge">Overdue</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onUpdated={(updated) => {
+            // Optimistically update local state so grouping updates immediately
+            setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
+            setSelectedTask(null);
+            // Also refetch to ensure server truth
+            fetchTasks();
+          }}
+        />
+      )}
     </div>
   );
 };

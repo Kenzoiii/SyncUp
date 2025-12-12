@@ -92,4 +92,10 @@ public class TeamController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @GetMapping("/{teamId}/me")
+    public ResponseEntity<Map<String, String>> getMyRole(@PathVariable Long teamId, Authentication auth) {
+        String role = teamService.getMyRole(teamId, auth.getName());
+        return ResponseEntity.ok(Map.of("role", role));
+    }
 }

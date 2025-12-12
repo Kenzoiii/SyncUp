@@ -91,6 +91,31 @@ public class TaskService {
         taskRepository.deleteById(taskId);
     }
 
+    @Transactional
+    public TaskDTO submitTask(Long taskId, String submissionLink) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        task.setSubmissionLink(submissionLink);
+        task.setSubmitted(true);
+        task.setSubmittedAt(java.time.LocalDateTime.now());
+        // Auto-mark as COMPLETED on submission
+        task.setStatus(Task.Status.COMPLETED);
+        Task saved = taskRepository.save(task);
+        return mapToDTO(saved);
+    }
+
+    @Transactional
+    public TaskDTO unsubmitTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        task.setSubmitted(false);
+        task.setSubmittedAt(null);
+        // Revert status back to IN_PROGRESS on unsubmit
+        task.setStatus(Task.Status.IN_PROGRESS);
+        Task saved = taskRepository.save(task);
+        return mapToDTO(saved);
+    }
+
     private TaskDTO mapToDTO(Task task) {
         String assignedName = null;
         if (task.getAssignedUser() != null) {
@@ -108,6 +133,9 @@ public class TaskService {
                 .projectId(task.getProjectId())
                 .assignedUserId(task.getAssignedUserId())
                 .assignedUserName(assignedName)
+            .submissionLink(task.getSubmissionLink())
+            .submitted(task.getSubmitted())
+            .submittedAt(task.getSubmittedAt())
                 .build();
     }
 }

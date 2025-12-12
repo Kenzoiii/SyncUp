@@ -24,8 +24,20 @@ const Projects: React.FC = () => {
   const userId = user?.userId;
 
   useEffect(() => {
-    fetchProjects();
+    // Determine admin via backend endpoint, then load projects
+    determineAdminViaEndpoint().then(fetchProjects);
   }, []);
+
+  const determineAdminViaEndpoint = async () => {
+    try {
+      if (!teamId) { setIsAdmin(false); return; }
+      const { teamsAPI } = await import('../services/api');
+      const { role } = await teamsAPI.getMyRole(teamId);
+      setIsAdmin(role === 'ADMIN');
+    } catch (e) {
+      setIsAdmin(false);
+    }
+  };
 
   const fetchProjects = async () => {
     try {
@@ -33,9 +45,7 @@ const Projects: React.FC = () => {
       // Fetch projects for the ACTIVE team only
       const data = await projectsAPI.getMyProjects(teamId);
       setProjects(data);
-      // Infer admin rights from any project where user is admin
-      const adminFlag = data.some(p => (p.isAdmin === true) || (p.admin === true));
-      setIsAdmin(adminFlag);
+      // Do not infer admin from projects; rely on team member role
       setError(null);
     } catch (err: any) {
       setError('Failed to load projects');
