@@ -46,6 +46,9 @@ public class Project {
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @Column(name = "created_at")
+    private java.time.LocalDate createdAt;
+
     @Column(name = "end_date")
     private LocalDate endDate;
 

@@ -126,6 +126,7 @@ export interface ProjectMember {
 }
 
 export interface Task {
+  assignedUserId: number;
   id: number;
   taskName: string;
   description: string;

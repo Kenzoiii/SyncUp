@@ -124,6 +124,7 @@ public class ProjectService {
                 .startDate(savedProject.getStartDate())
                 .isAdmin(true) // The creator is effectively an admin
                 .build();
+
     }
 
     @Transactional
