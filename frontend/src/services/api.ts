@@ -108,6 +108,7 @@ export interface UpdateProfileRequest {
 }
 
 export interface Project {
+  createdByName: string;
   id: number;
   projectName: string;
   description: string;
@@ -116,6 +117,7 @@ export interface Project {
   teamId: number;
   isAdmin?: boolean;
   admin?: boolean;
+  createdAt?: string;
 }
 
 export interface ProjectMember {
@@ -321,6 +323,10 @@ export const tasksAPI = {
   },
   unsubmitTask: async (taskId: number): Promise<Task> => {
     const response = await api.post(`/tasks/${taskId}/unsubmit`);
+    return response.data;
+  },
+  updateTask: async (taskId: number, data: Partial<Task>): Promise<Task> => {
+    const response = await api.put(`/tasks/${taskId}`, data);
     return response.data;
   },
 };

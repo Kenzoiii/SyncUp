@@ -117,30 +117,6 @@ public class TaskService {
         Task saved = taskRepository.save(task);
         return mapToDTO(saved);
     }
-    @Transactional
-    public TaskDTO updateTaskDetails(Long taskId, TaskDTO taskDTO, String userEmail) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
-
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Security: Only Assignee or Admin can edit
-        boolean isAssignee = task.getAssignedUserId() != null && task.getAssignedUserId().equals(user.getId());
-
-        // You might want to check for Admin role here too if you passed the teamId
-        if (!isAssignee) {
-            throw new RuntimeException("Only the assigned member can edit this task.");
-        }
-
-        // Update Start Date
-        if (taskDTO.getStartDate() != null) {
-            task.setStartDate(java.time.LocalDate.parse(taskDTO.getStartDate()));
-        }
-
-        // Save and return
-        return mapToDTO(taskRepository.save(task));
-    }
 
     private TaskDTO mapToDTO(Task task) {
         String assignedName = null;

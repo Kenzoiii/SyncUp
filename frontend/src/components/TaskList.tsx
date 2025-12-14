@@ -90,7 +90,7 @@ const TaskList: React.FC<TaskListProps> = ({ isAdmin }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#666', marginBottom: '8px' }}>
             <User size={14} />
             {task.assignedUserName ? (
-                <span>Assigned to <strong style={{ color: '#4a9eff' }}>{task.assignedUserName}</strong></span>
+                <span>Assigned to <strong style={{ color: 'black' }}>{task.assignedUserName}</strong></span>
             ) : (
                 <span style={{ fontStyle: 'italic', color: '#999' }}>Unassigned</span>
             )}

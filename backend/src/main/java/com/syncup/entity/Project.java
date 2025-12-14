@@ -61,13 +61,12 @@ public class Project {
     @ToString.Exclude
     private List<Task> tasks;
 
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "created_by")
+    private Long createdBy;
 
     public enum Status { ACTIVE, COMPLETED, ON_HOLD, CANCELLED }
 }
