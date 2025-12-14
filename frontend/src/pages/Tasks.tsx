@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import TaskList from '../components/TaskList';
 import CreateTaskModal from '../components/CreateTaskModal';
 import { Plus } from 'lucide-react';
-import { projectsAPI } from '../services/api';
 import '../styles/Dashboard.css';
 
 const Tasks: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isAdmin, setIsAdmin] = useState<boolean>(false);
-
-    // 1. Add this "Refresh Trigger" state
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
@@ -20,8 +17,9 @@ const Tasks: React.FC = () => {
                 const teamId = user?.teamId;
                 if (!teamId) { setIsAdmin(false); return; }
                 const { teamsAPI } = await import('../services/api');
-                const { role } = await teamsAPI.getMyRole(teamId);
-                setIsAdmin(role === 'ADMIN');
+                const teamMembers = await teamsAPI.getTeamMembers(teamId);
+                const me = teamMembers.find((m: any) => m.userId === user.userId);
+                setIsAdmin(me?.role === 'ADMIN');
             } catch (e) {
                 setIsAdmin(false);
             }
@@ -51,12 +49,8 @@ const Tasks: React.FC = () => {
 
                 <div className="dashboard-content">
                     <div className="left-column" style={{ gridColumn: '1 / -1' }}>
-
-                        {/* 2. Add the key={refreshTrigger} prop here.
-                When 'refreshTrigger' changes, React destroys and recreates this component,
-                forcing it to fetch the new data from the database. */}
-                        <TaskList key={refreshTrigger} />
-
+                        {/* PASS isAdmin TO TASK LIST */}
+                        <TaskList key={refreshTrigger} isAdmin={isAdmin} />
                     </div>
                 </div>
             </div>
@@ -64,7 +58,6 @@ const Tasks: React.FC = () => {
             {showCreateModal && (
                 <CreateTaskModal
                     onClose={() => setShowCreateModal(false)}
-                    // 3. When a task is created, increase the trigger by 1
                     onTaskCreated={() => setRefreshTrigger(prev => prev + 1)}
                 />
             )}

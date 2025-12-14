@@ -286,41 +286,7 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  const renderNotifications = () => {
-    const notifications = [
-      { title: 'New task assigned', message: 'You have been assigned to Project 1', time: '2 hours ago', type: 'info' },
-      { title: 'Task completed', message: 'John Ekeler completed Design UI Components', time: '4 hours ago', type: 'success' },
-      { title: 'Deadline approaching', message: 'Project 2 deadline is in 2 days', time: '1 day ago', type: 'warning' }
-    ];
 
-    return (
-      <div className="dashboard-content">
-        <div className="left-column" style={{ gridColumn: '1 / -1' }}>
-          <div className="widget">
-            <div className="widget-header">
-              <h3>Notifications & Alerts</h3>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {notifications.map((notif, index) => (
-                <div key={index} style={{
-                  padding: '16px',
-                  backgroundColor: 'var(--primary-bg)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--white)' }}>{notif.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--gray-medium)' }}>{notif.time}</div>
-                  </div>
-                  <div style={{ fontSize: '14px', color: 'var(--gray-medium)' }}>{notif.message}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const renderProjectTools = () => {
     const tools = [
@@ -406,13 +372,8 @@ const Dashboard: React.FC = () => {
             >
               Task Management
             </button>
-            <button 
-              className={`tab ${activeTab === 'Notifications & Alerts' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Notifications & Alerts')}
-            >
-              Notifications & Alerts
-            </button>
-            <button 
+
+            <button
               className={`tab ${activeTab === 'Project Tools' ? 'active' : ''}`}
               onClick={() => setActiveTab('Project Tools')}
             >
@@ -427,7 +388,6 @@ const Dashboard: React.FC = () => {
         {/* Render content based on active tab */}
         {activeTab === 'Project Overview' && renderProjectOverview()}
         {activeTab === 'Task Management' && renderTaskManagement()}
-        {activeTab === 'Notifications & Alerts' && renderNotifications()}
         {activeTab === 'Project Tools' && renderProjectTools()}
 
         {showTeamModal && (

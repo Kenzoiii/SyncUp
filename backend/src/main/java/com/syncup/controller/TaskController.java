@@ -20,7 +20,7 @@ public class TaskController {
     @GetMapping("/my-tasks")
     public ResponseEntity<List<TaskDTO>> getMyTasks(
             Authentication auth,
-            @RequestParam(required = false) Long teamId // <--- Add this param
+            @RequestParam(required = false) Long teamId
     ) {
         return ResponseEntity.ok(taskService.getMyTasks(auth.getName(), teamId));
     }

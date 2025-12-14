@@ -3,6 +3,7 @@ package com.syncup.service;
 import com.syncup.dto.TaskDTO;
 import com.syncup.entity.Project;
 import com.syncup.entity.Task;
+import com.syncup.entity.TeamMember;
 import com.syncup.entity.User;
 import com.syncup.repository.ProjectRepository;
 import com.syncup.repository.TaskRepository;
@@ -27,27 +28,28 @@ public class TaskService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // If a team is specified, ensure user is a member; otherwise return empty
-        if (activeTeamId != null) {
-            boolean isMember = teamMemberRepository.existsByTeamIdAndUserId(activeTeamId, user.getId());
-            if (!isMember) {
-                return List.of();
-            }
-        }
+        // 1. Check if user is Admin in this team
+        boolean isAdmin = teamMemberRepository.findByTeamIdAndUserId(activeTeamId, user.getId())
+                .map(tm -> tm.getRole() == TeamMember.Role.ADMIN)
+                .orElse(false);
 
-        // Fetch all assigned tasks
-        List<Task> allTasks = taskRepository.findByAssignedUserId(user.getId());
+        List<Task> tasks;
 
-        // FILTER: Only keep tasks where the Project's Team ID matches activeTeamId
-        if (activeTeamId != null) {
-            allTasks = allTasks.stream()
-                    .filter(task -> task.getProject().getTeamId().equals(activeTeamId))
+        if (isAdmin) {
+            // 2. ADMIN: Fetch ALL tasks for the team
+            // You might need to add a repository method: findByProjectTeamId(Long teamId)
+            // Or filter all tasks by project.teamId in Java stream
+            tasks = taskRepository.findAll().stream()
+                    .filter(t -> t.getProject().getTeamId().equals(activeTeamId))
+                    .collect(Collectors.toList());
+        } else {
+            // 3. MEMBER: Fetch only tasks assigned to them in this team
+            tasks = taskRepository.findByAssignedUserId(user.getId()).stream()
+                    .filter(t -> t.getProject().getTeamId().equals(activeTeamId))
                     .collect(Collectors.toList());
         }
 
-        return allTasks.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+        return tasks.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
     public List<TaskDTO> getTasksByProject(Long projectId) {

@@ -14,4 +14,6 @@ public class ProjectDTO {
     private Long teamId;
     private boolean isAdmin; // Calculated field
     private LocalDate startDate;
+    private String createdAt;
+    private String createdByName;
 }

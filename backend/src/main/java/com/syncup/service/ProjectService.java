@@ -40,13 +40,12 @@ public class ProjectService {
                     .anyMatch(tm -> tm.getTeamId().equals(activeTeamId));
 
             if (!isMember) {
-                // If they try to access a team they aren't in, return empty or throw error
                 return List.of();
             }
             // Fetch ONLY projects for this team
             projects = projectRepository.findByTeamId(activeTeamId);
         } else {
-            // Fallback: Fetch everything (old behavior)
+            // Fallback: Fetch everything
             List<Long> teamIds = user.getTeamMemberships().stream()
                     .map(TeamMember::getTeamId)
                     .toList();
@@ -54,10 +53,18 @@ public class ProjectService {
             projects = projectRepository.findByTeamIdIn(teamIds);
         }
 
-        // Map to DTO (Same as before)
+        // Map to DTO
         return projects.stream().map(project -> {
             boolean isAdmin = user.getTeamMemberships().stream()
                     .anyMatch(tm -> tm.getTeamId().equals(project.getTeamId()) && tm.getRole() == TeamMember.Role.ADMIN);
+
+            // FIX: Fetch Creator Name
+            String creatorName = "Unknown";
+            if (project.getCreatedBy() != null) {
+                creatorName = userRepository.findById(project.getCreatedBy())
+                        .map(User::getFullName)
+                        .orElse("Unknown");
+            }
 
             return ProjectDTO.builder()
                     .id(project.getId())
@@ -68,6 +75,9 @@ public class ProjectService {
                     .teamId(project.getTeamId())
                     .startDate(project.getStartDate())
                     .isAdmin(isAdmin)
+                    // FIX: Map new fields
+                    .createdByName(creatorName)
+                    .createdAt(project.getCreatedAt() != null ? project.getCreatedAt().toString() : null)
                     .build();
         }).collect(Collectors.toList());
     }
@@ -82,7 +92,7 @@ public class ProjectService {
         return team.getMembers().stream()
                 .map(member -> TeamMemberDTO.builder()
                         .userId(member.getUserId())
-                        .fullName(member.getUser().getFullName()) // Assumes User is fetched eagerly or OSIV is on
+                        .fullName(member.getUser().getFullName())
                         .email(member.getUser().getEmail())
                         .role(member.getRole())
                         .joinedAt(member.getJoinedAt())
@@ -95,7 +105,7 @@ public class ProjectService {
         User user = userRepository.findByEmail(ownerEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 1. Verify user belongs to the team they are creating a project for
+        // 1. Verify user belongs to the team
         boolean isMember = teamMemberRepository.findByTeamIdAndUserId(projectDTO.getTeamId(), user.getId()).isPresent();
         if (!isMember) {
             throw new RuntimeException("You are not a member of this team.");
@@ -109,6 +119,9 @@ public class ProjectService {
                 .status(Project.Status.ACTIVE)
                 .progressPercentage(0)
                 .startDate(projectDTO.getStartDate() != null ? projectDTO.getStartDate() : java.time.LocalDate.now())
+                // FIX: Set Creation Date and Creator ID here
+                .createdAt(java.time.LocalDate.now())
+                .createdBy(user.getId())
                 .build();
 
         Project savedProject = projectRepository.save(project);
@@ -123,18 +136,19 @@ public class ProjectService {
                 .teamId(savedProject.getTeamId())
                 .startDate(savedProject.getStartDate())
                 .isAdmin(true) // The creator is effectively an admin
+                // FIX: Map the new fields correctly inside the builder
+                .createdByName(user.getFullName())
+                .createdAt(savedProject.getCreatedAt().toString())
                 .build();
     }
 
     @Transactional
     public void addMember(Long projectId, String emailToAdd, String requesterEmail) {
-        // 1. Validation
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
         User requester = userRepository.findByEmail(requesterEmail).orElseThrow();
 
-        // 2. Check Permission (Must be Admin of the team)
         boolean isRequesterAdmin = teamMemberRepository.findByTeamIdAndUserId(project.getTeamId(), requester.getId())
                 .map(tm -> tm.getRole() == TeamMember.Role.ADMIN)
                 .orElse(false);
@@ -143,16 +157,13 @@ public class ProjectService {
             throw new RuntimeException("Only Team Admins can add members.");
         }
 
-        // 3. Find User to Add
         User userToAdd = userRepository.findByEmail(emailToAdd)
                 .orElseThrow(() -> new RuntimeException("User with email " + emailToAdd + " not found."));
 
-        // 4. Check Duplicate
         if (teamMemberRepository.existsByTeamIdAndUserId(project.getTeamId(), userToAdd.getId())) {
             throw new RuntimeException("User is already a member of this team.");
         }
 
-        // 5. Add Member
         TeamMember newMember = TeamMember.builder()
                 .teamId(project.getTeamId())
                 .userId(userToAdd.getId())
@@ -170,7 +181,6 @@ public class ProjectService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Security Check: Is the user an Admin of the team this project belongs to?
         boolean isAdmin = teamMemberRepository.findByTeamIdAndUserId(project.getTeamId(), user.getId())
                 .map(tm -> tm.getRole() == TeamMember.Role.ADMIN)
                 .orElse(false);

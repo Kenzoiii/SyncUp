@@ -192,6 +192,18 @@ const Projects: React.FC = () => {
                         <h4 className="project-name">{project.projectName}</h4>
                         <p className="project-description">{project.description || "No description"}</p>
 
+
+                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Users size={12} />
+                            <span>Created by <strong style={{ color: '#888' }}>{project.createdByName}</strong></span>
+                          </div>
+                          {project.createdAt && (
+                              <div style={{ marginLeft: '18px', fontSize: '11px', color: '#999' }}>
+                                on {new Date(project.createdAt).toLocaleDateString()}
+                              </div>
+                          )}
+                        </div>
                         <div className="project-progress">
                           <div className="progress-bar">
                             <div
@@ -291,7 +303,7 @@ const Projects: React.FC = () => {
                     setShowCreateModal(false);
                     fetchProjects();
                   }}
-                  defaultTeamId={teamId} // FIXED PROP NAME
+                  defaultTeamId={teamId}  // <--- ✅ RENAME TO THIS
               />
           )}
         </div>
